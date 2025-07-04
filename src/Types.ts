@@ -13,7 +13,6 @@ export interface DockingPanelConfig {
   pinned?: boolean
   canPin?: boolean
   hideHeader?: boolean
-  closed?: boolean
   content?: React.ReactNode
   tabs?: { label: string; content: React.ReactNode }[]
   className?: string
