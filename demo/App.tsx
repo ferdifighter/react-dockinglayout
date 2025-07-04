@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { DockingLayout, DockingLayoutConfig } from '../src'
+import { Tabs } from '../src'
 
 const DemoApp: React.FC = () => {
   const [layoutConfig, setLayoutConfig] = useState<DockingLayoutConfig>({
@@ -43,9 +44,25 @@ const DemoApp: React.FC = () => {
         id: 'center',
         panels: [
           {
+            id: 'toolbox',
+            title: 'Toolbox',
+            closable: false,
+            canPin: false,
+            hideHeader: true,
+            resizable: false,
+            size: 100,
+            content: (
+              <div>
+                <h2>Toolbox</h2>                
+              </div>
+            ),
+          },          
+          {
             id: 'editor',
             title: 'Editor',
             closable: false,
+            canPin: false,
+            hideHeader: true,
             content: (
               <div>
                 <h2>Willkommen zur React Docking Layout Demo</h2>
@@ -54,19 +71,30 @@ const DemoApp: React.FC = () => {
             ),
           },
           {
-            id: 'output',
-            title: 'Output',
-            content: (
-              <div>
-                <h3>System Output</h3>
-                <div style={{ fontFamily: 'monospace', fontSize: '12px' }}>
-                  <div>✅ Anwendung gestartet</div>
-                  <div>📦 Dependencies geladen</div>
-                  <div>🚀 React Docking Layout bereit</div>
-                </div>
-              </div>
-            ),
-            size: 120,
+            id: 'console',
+            title: 'Debug / Terminal',
+            tabs: [
+              {
+                label: 'Output',                
+                content: (
+                  <div style={{ fontFamily: 'monospace', fontSize: '12px' }}>
+                    <div>✅ Anwendung gestartet</div>
+                    <div>📦 Dependencies geladen</div>
+                    <div>🚀 React Docking Layout bereit</div>
+                  </div>
+                ),
+              },
+              {
+                label: 'Terminal',
+                content: (
+                  <div style={{ fontFamily: 'monospace', fontSize: '12px', color: '#1976d2' }}>
+                    <div>user@host:~$ echo Hallo Welt</div>
+                    <div>Hallo Welt</div>
+                  </div>
+                ),
+              },
+            ],
+            size: 200,
             resizable: true,
           },
         ],

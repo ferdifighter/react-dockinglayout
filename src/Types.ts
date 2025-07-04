@@ -11,9 +11,14 @@ export interface DockingPanelConfig {
   collapsed?: boolean
   closable?: boolean
   pinned?: boolean
-  content: React.ReactNode
+  canPin?: boolean
+  hideHeader?: boolean
+  closed?: boolean
+  content?: React.ReactNode
+  tabs?: { label: string; content: React.ReactNode }[]
   className?: string
   style?: React.CSSProperties
+  center?: boolean
 }
 
 export interface DockingColumnConfig {

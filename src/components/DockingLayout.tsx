@@ -52,16 +52,6 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
     if (colIdx === columns.length - 1 && pinned) setOpenRightDrawer(null);
   }
 
-  // Collapse/Expand einer Spalte
-  const handleColumnCollapse = (colIdx: number, collapsed: boolean) => {
-    setColumns(prevCols => {
-      const cols = [...prevCols]
-      cols[colIdx] = { ...cols[colIdx], collapsed }
-      onLayoutChange?.({ ...config, columns: cols })
-      return cols
-    })
-  }
-
   // Panel-Events (Toggle, Close)
   const handlePanelToggle = useCallback((colId: string, panelId: string, collapsed: boolean) => {
     const updated = columns.map(col =>
@@ -244,9 +234,22 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
                 <span style={{ flex: 1, fontWeight: 500 }}>{panel.title}</span>
                 <button
                   style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 16, marginRight: 8 }}
-                  title="Anpinnen"
-                  onClick={() => handlePinPanel(0, panel.id, true)}
-                >📌</button>
+                  title={panel.pinned ? 'Unpin' : 'Pin'}
+                  onClick={() => handlePinPanel(0, panel.id, !panel.pinned)}
+                >
+                  {panel.pinned ? (
+                    // Pin: Gerade
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M16,12V4H17V2H7V4H8V12L6,14V16H11.2V22H12.8V16H18V14L16,12Z"/>
+                    </svg>
+                  ) : (
+                    // Unpin: Pin mit diagonaler Linie
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M16,12V4H17V2H7V4H8V12L6,14V16H11.2V22H12.8V16H18V14L16,12Z"/>
+                      <line x1="4" y1="20" x2="20" y2="4" stroke="currentColor" strokeWidth="2" />
+                    </svg>
+                  )}
+                </button>
                 <button
                   style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 16 }}
                   title="Schließen"
@@ -276,17 +279,20 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
           {!columns[0].collapsed && columns[0].panels.filter(p => p.pinned !== false).map((panel, idx, arr) => (
             <React.Fragment key={panel.id}>
               <Panel
-                config={panel}
+                config={{ ...panel, center: true }}
                 onToggle={(id: string, collapsed: boolean) => handlePanelToggle(columns[0].id, id, collapsed)}
                 onClose={(id: string) => handlePanelClose(columns[0].id, id)}
                 onPinChange={(id: string, pinned: boolean) => handlePinPanel(0, id, pinned)}
               />
-              {idx < arr.length - 1 && (
-                <ResizeHandle
-                  position="vertical"
-                  onResizeStart={(e: React.MouseEvent<HTMLDivElement>) => handleSplitResizeStart(0, idx, e)}
-                />
-              )}
+              {/* Moderner Split-ResizeHandle zwischen Panels (außer nach dem letzten) */}
+              {idx < arr.length - 1 &&
+                !panel.collapsed &&
+                !arr[idx + 1].collapsed && (
+                  <ResizeHandle
+                    position="vertical"
+                    onResizeStart={(e: React.MouseEvent<HTMLDivElement>) => handleSplitResizeStart(0, idx, e)}
+                  />
+                )}
             </React.Fragment>
           ))}
         </div>
@@ -319,29 +325,166 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
           style.minWidth = undefined;
           style.maxWidth = undefined;
         }
-        return (
-          <React.Fragment key={col.id}>
+        // Center-Bereich: Overlay-Logik für unpinned Panels
+        if (col.id === 'center') {
+          const pinnedPanels = col.panels.filter(p => p.pinned !== false);
+          const unpinnedPanels = col.panels.filter(p => p.pinned === false);
+          const [openCenterDrawer, setOpenCenterDrawer] = useState<string | null>(null);
+          // Tabs für unpinned Panels unten
+          const centerTabs = unpinnedPanels.map(p => ({ label: p.title, id: p.id }));
+          return (
             <div
               className={clsx('docking-column', col.className, { 'docking-column--collapsed': col.collapsed })}
-              style={style}
+              style={{
+                ...style,
+                position: 'relative',
+                display: 'flex',
+                flexDirection: 'column',
+                height: '100%',
+              }}
             >
-              {/* Panels nur anzeigen, wenn nicht collapsed */}
-              {!col.collapsed && col.panels.filter(p => p.pinned !== false).map((panel, idx) => (
+              {/* Gerenderte Panels (pinned) */}
+              {!col.collapsed && pinnedPanels.map((panel, idx) => (
                 <React.Fragment key={panel.id}>
                   <Panel
-                    config={panel}
+                    config={{ ...panel, center: true }}
                     onToggle={(id: string, collapsed: boolean) => handlePanelToggle(col.id, id, collapsed)}
                     onClose={(id: string) => handlePanelClose(col.id, id)}
                     onPinChange={(id: string, pinned: boolean) => handlePinPanel(colIdx, id, pinned)}
                   />
-                  {/* Moderner Split-ResizeHandle zwischen Panels (außer nach dem letzten) */}
-                  {idx < col.panels.filter(p => p.pinned !== false).length - 1 && (
+                  {/* ResizeHandle nur zwischen pinnedPanels, wenn beide resizable sind */}
+                  {idx < pinnedPanels.length - 1 && 
+                   pinnedPanels[idx].resizable !== false && 
+                   pinnedPanels[idx + 1].resizable !== false && (
                     <ResizeHandle
                       position="vertical"
                       onResizeStart={(e: React.MouseEvent<HTMLDivElement>) => handleSplitResizeStart(colIdx, idx, e)}
                     />
                   )}
                 </React.Fragment>
+              ))}
+              {/* Tabs-Leiste unten für unpinned Panels (ohne Header) */}
+              {unpinnedPanels.length > 0 && (
+                <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, width: '100%', zIndex: 2, background: '#fafafa', borderTop: '1px solid #e0e0e0' }}>
+                  <div style={{ display: 'flex', height: 28 }}>
+                    {centerTabs.map(tab => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setOpenCenterDrawer(tab.id)}
+                        style={{
+                          padding: '4px 14px',
+                          border: 'none',
+                          borderBottom: openCenterDrawer === tab.id ? '2px solid #1976d2' : 'none',
+                          background: 'none',
+                          cursor: 'pointer',
+                          fontWeight: openCenterDrawer === tab.id ? 600 : 400,
+                          color: openCenterDrawer === tab.id ? '#1976d2' : '#333',
+                          height: '100%',
+                        }}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* Overlay/Drawer für unpinned Panel (center) */}
+              {openCenterDrawer && unpinnedPanels.find(p => p.id === openCenterDrawer) && (
+                <div
+                  id="center-drawer"
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    bottom: 28, // Höhe der Tabs-Leiste
+                    height: '40vh',
+                    background: '#fff',
+                    borderTop: '1px solid #e0e0e0',
+                    boxShadow: '0 -2px 8px rgba(0,0,0,0.08)',
+                    zIndex: 4000,
+                    display: 'flex',
+                    flexDirection: 'column',
+                  }}
+                >
+                  {unpinnedPanels.filter(p => p.id === openCenterDrawer).map(panel => (
+                    <div key={panel.id} style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid #e0e0e0', padding: '8px 12px', background: '#f5f5f5' }}>
+                        <span style={{ flex: 1, fontWeight: 500 }}>{panel.title}</span>
+                        <button
+                          style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 16, marginRight: 8 }}
+                          title={panel.pinned ? 'Unpin' : 'Pin'}
+                          onClick={() => { handlePinPanel(colIdx, panel.id, !panel.pinned); setOpenCenterDrawer(null); }}
+                        >
+                          {panel.pinned ? (
+                            // Pin: Gerade
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M16,12V4H17V2H7V4H8V12L6,14V16H11.2V22H12.8V16H18V14L16,12Z"/>
+                            </svg>
+                          ) : (
+                            // Unpin: Pin mit diagonaler Linie
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M16,12V4H17V2H7V4H8V12L6,14V16H11.2V22H12.8V16H18V14L16,12Z"/>
+                              <line x1="4" y1="20" x2="20" y2="4" stroke="currentColor" strokeWidth="2" />
+                            </svg>
+                          )}
+                        </button>
+                        <button
+                          style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 16 }}
+                          title="Schließen"
+                          onClick={() => setOpenCenterDrawer(null)}
+                        >✕</button>
+                      </div>
+                      <div style={{ flex: 1, overflow: 'auto', padding: 12 }}>{panel.content}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        }
+        // Panels: erst alle nicht-collapsed, dann alle collapsed Panels
+        const pinnedPanels = col.panels.filter(p => p.pinned !== false);
+        const expandedPanels = pinnedPanels.filter(p => !p.collapsed);
+        const collapsedPanels = pinnedPanels.filter(p => p.collapsed);
+        return (
+          <React.Fragment key={col.id}>
+            <div
+              className={clsx('docking-column', col.className, { 'docking-column--collapsed': col.collapsed })}
+              style={{
+                ...style,
+                position: 'relative',
+              }}
+            >
+              {/* Expanded Panels als Flex-Children */}
+              {!col.collapsed && expandedPanels.map((panel, idx) => (
+                <React.Fragment key={panel.id}>
+                  <Panel
+                    config={{ ...panel, center: true }}
+                    onToggle={(id: string, collapsed: boolean) => handlePanelToggle(col.id, id, collapsed)}
+                    onClose={(id: string) => handlePanelClose(col.id, id)}
+                    onPinChange={(id: string, pinned: boolean) => handlePinPanel(colIdx, id, pinned)}
+                  />
+                  {/* ResizeHandle nur zwischen expandedPanels, wenn beide resizable sind */}
+                  {idx < expandedPanels.length - 1 && 
+                   expandedPanels[idx].resizable !== false && 
+                   expandedPanels[idx + 1].resizable !== false && (
+                    <ResizeHandle
+                      position="vertical"
+                      onResizeStart={(e: React.MouseEvent<HTMLDivElement>) => handleSplitResizeStart(colIdx, idx, e)}
+                    />
+                  )}
+                </React.Fragment>
+              ))}
+              {/* Collapsed Panels als Overlay am unteren Rand */}
+              {!col.collapsed && collapsedPanels.map(panel => (
+                <div key={panel.id} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, width: '100%', zIndex: 2 }}>
+                  <Panel
+                    config={{ ...panel, size: undefined }}
+                    onToggle={(id: string, collapsed: boolean) => handlePanelToggle(col.id, id, collapsed)}
+                    onClose={(id: string) => handlePanelClose(col.id, id)}
+                    onPinChange={(id: string, pinned: boolean) => handlePinPanel(colIdx, id, pinned)}
+                  />
+                </div>
               ))}
             </div>
             {/* Moderner Spalten-ResizeHandle (außer nach der letzten Spalte) */}
@@ -436,9 +579,22 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
                 <span style={{ flex: 1, fontWeight: 500 }}>{panel.title}</span>
                 <button
                   style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 16, marginRight: 8 }}
-                  title="Anpinnen"
-                  onClick={() => handlePinPanel(columns.length-1, panel.id, true)}
-                >📌</button>
+                  title={panel.pinned ? 'Unpin' : 'Pin'}
+                  onClick={() => handlePinPanel(columns.length-1, panel.id, !panel.pinned)}
+                >
+                  {panel.pinned ? (
+                    // Pin: Gerade
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M16,12V4H17V2H7V4H8V12L6,14V16H11.2V22H12.8V16H18V14L16,12Z"/>
+                    </svg>
+                  ) : (
+                    // Unpin: Pin mit diagonaler Linie
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M16,12V4H17V2H7V4H8V12L6,14V16H11.2V22H12.8V16H18V14L16,12Z"/>
+                      <line x1="4" y1="20" x2="20" y2="4" stroke="currentColor" strokeWidth="2" />
+                    </svg>
+                  )}
+                </button>
                 <button
                   style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 16 }}
                   title="Schließen"
@@ -449,6 +605,13 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
             </div>
           ))}
         </div>
+      )}
+      {/* ResizeHandle zwischen Center und rechter Spalte */}
+      {columns.length > 1 && columns[columns.length-1] && columns[columns.length-1].panels.filter(p => p.pinned !== false).length > 0 && (
+        <ResizeHandle
+          position="horizontal"
+          onResizeStart={e => handleColumnResizeStart(columns.length - 2, e)}
+        />
       )}
       {/* Rechte Spalte (Panels mit pinned: true) */}
       {columns[columns.length-1] && columns[columns.length-1].panels.filter(p => p.pinned !== false).length > 0 && (
@@ -463,19 +626,20 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
             flexDirection: 'column',
             overflow: 'hidden',
             position: 'relative',
-            order: 1000,
           }}
         >
           {/* Panels nur anzeigen, wenn nicht collapsed */}
           {!columns[columns.length-1].collapsed && columns[columns.length-1].panels.filter(p => p.pinned !== false).map((panel, idx, arr) => (
             <React.Fragment key={panel.id}>
               <Panel
-                config={panel}
+                config={{ ...panel, center: true }}
                 onToggle={(id: string, collapsed: boolean) => handlePanelToggle(columns[columns.length-1].id, id, collapsed)}
                 onClose={(id: string) => handlePanelClose(columns[columns.length-1].id, id)}
                 onPinChange={(id: string, pinned: boolean) => handlePinPanel(columns.length-1, id, pinned)}
               />
-              {idx < arr.length - 1 && (
+              {idx < arr.length - 1 && 
+               arr[idx].resizable !== false && 
+               arr[idx + 1].resizable !== false && (
                 <ResizeHandle
                   position="vertical"
                   onResizeStart={(e: React.MouseEvent<HTMLDivElement>) => handleSplitResizeStart(columns.length-1, idx, e)}

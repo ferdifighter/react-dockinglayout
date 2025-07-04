@@ -237,4 +237,21 @@
   .docking-panels--bottom {
     order: 3;
   }
+}
+
+/* Docking-Layout Spalte als Flex-Container mit voller Höhe */
+.docking-column {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+}
+
+/* Panel im collapsed-Zustand: Tabs-Leiste immer am unteren Rand */
+.docking-panel[style*='height: 28px'] {
+  margin-top: auto !important;
+  flex: 0 0 auto !important;
+  min-height: 28px !important;
+  max-height: 28px !important;
+  height: 28px !important;
 } 
