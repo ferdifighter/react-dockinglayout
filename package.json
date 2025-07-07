@@ -1,6 +1,6 @@
 {
   "name": "@ferdifighter/react-docking-layout",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Eine flexible React-Komponente für Docking-Layouts ähnlich VS Code",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
