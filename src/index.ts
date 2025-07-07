@@ -1,7 +1,12 @@
-export { DockingLayout } from './components/DockingLayout'
-export { Panel } from './components/Panel'
-export { ResizeHandle } from './components/ResizeHandle'
-export { Tabs } from './components/Tabs'
+import './styles.css'
+import './themes/light.theme.css'
+import './themes/dark.theme.css'
+export * from './components/DockingLayout'
+export * from './components/Panel'
+export * from './components/ResizeHandle'
+export * from './components/Tabs'
+export * from './types'
+
 export type {
   DockingLayoutProps,
   DockingLayoutConfig,
@@ -9,4 +14,4 @@ export type {
   DockingColumnConfig,
   ResizeHandleProps,
   PanelPosition,
-} from './types' 
+} 

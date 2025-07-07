@@ -6,12 +6,22 @@ import clsx from 'clsx'
 
 const COLLAPSED_WIDTH = 36
 
-export const DockingLayout: React.FC<DockingLayoutProps> = ({
+interface DockingLayoutWithClosedProps extends DockingLayoutProps {
+  closedPanels: string[]
+  onPanelClose: (panelId: string) => void
+  theme?: 'light' | 'dark' | 'auto'
+}
+
+export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
   config,
   onLayoutChange,
+  onPanelVisibilityChange,
+  closedPanels,
+  onPanelClose,
+  theme = 'light',
   className,
   style,
-}: DockingLayoutProps) => {
+}: DockingLayoutWithClosedProps) => {
   const [columns, setColumns] = useState<DockingColumnConfig[]>(config.columns)
   // Für Resizing: Referenz auf aktuelle Spalten
   const columnsRef = useRef(columns)
@@ -36,6 +46,18 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
     return () => document.removeEventListener('mousedown', handleClick)
   }, [openLeftDrawer])
 
+  useEffect(() => {
+    if (!openRightDrawer) return
+    const handleClick = (e: MouseEvent) => {
+      const drawer = document.getElementById('right-drawer')
+      if (drawer && !drawer.contains(e.target as Node)) {
+        setOpenRightDrawer(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [openRightDrawer])
+
   // Pin/Unpin-Handler für Panels (Panel wird wirklich verschoben)
   const handlePinPanel = (colIdx: number, panelId: string, pinned: boolean) => {
     setColumns(prevCols => {
@@ -45,7 +67,7 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
         p.id === panelId ? { ...p, pinned } : p
       );
       cols[colIdx] = { ...col, panels };
-      onLayoutChange?.({ ...config, columns: cols });
+      onLayoutChange?.({ ...config, columns: cols })
       return cols;
     });
     if (colIdx === 0 && pinned) setOpenLeftDrawer(null);
@@ -63,15 +85,49 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
     onLayoutChange?.({ ...config, columns: updated })
   }, [columns, config, onLayoutChange])
 
+  // Panel schließen: Callback an Demo-App
   const handlePanelClose = useCallback((colId: string, panelId: string) => {
-    const updated = columns.map(col =>
-      col.id === colId
-        ? { ...col, panels: col.panels.filter(p => p.id !== panelId) }
-        : col
-    )
-    setColumns(updated)
-    onLayoutChange?.({ ...config, columns: updated })
-  }, [columns, config, onLayoutChange])
+    onPanelClose(panelId)
+  }, [onPanelClose])
+
+  // Neuer Handler für Panel-Öffnung über Checkbox
+  const handlePanelOpen = useCallback((panelId: string) => {
+    const newClosedPanels = closedPanels.filter(id => id !== panelId)
+    setColumns(prevCols => {
+      const cols = [...prevCols]
+      const col = { ...cols[cols.findIndex(c => c.id === 'center')] }
+      const panels = [...col.panels]
+      panels[panels.findIndex(p => p.id === panelId)] = { ...panels[panels.findIndex(p => p.id === panelId)], pinned: true }
+      cols[cols.findIndex(c => c.id === 'center')] = { ...col, panels }
+      onLayoutChange?.({ ...config, columns: cols })
+      return cols
+    })
+  }, [columns, config, onLayoutChange, closedPanels])
+
+  // Hilfsfunktion: Alle verfügbaren Panels sammeln
+  const getAllPanels = useCallback(() => {
+    const allPanels: { id: string; title: string; columnId: string; visible: boolean }[] = []
+    columns.forEach(col => {
+      col.panels.forEach(panel => {
+        allPanels.push({
+          id: panel.id,
+          title: panel.title,
+          columnId: col.id,
+          visible: !closedPanels.includes(panel.id)
+        })
+      })
+    })
+    return allPanels
+  }, [columns, closedPanels])
+
+  // Panels nach closedPanels filtern
+  const getVisibleColumns = useCallback(() => {
+    return columns.map(col => ({
+      ...col,
+      panels: col.panels.filter(panel => !closedPanels.includes(panel.id))
+    }))
+  }, [columns, closedPanels])
+  const visibleColumns = getVisibleColumns()
 
   // Modernes Split-Resizing zwischen zwei Panels (vertikal, pixelgenau)
   const handleSplitResizeStart = (colIdx: number, upperIdx: number, e: React.MouseEvent<HTMLDivElement>) => {
@@ -142,6 +198,13 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
     document.addEventListener('pointerup', onPointerUp)
   }
 
+  // GLOBALER STATE für aktives Bottom-Panel (Center-Bereich)
+  const centerCol = config.columns.find(col => col.id === 'center');
+  const bottomPanelsGlobal = centerCol ? centerCol.panels.filter(p => p.position === 'bottom') : [];
+  const [activeBottomTabId, setActiveBottomTabId] = useState<string | null>(
+    bottomPanelsGlobal.length > 0 ? bottomPanelsGlobal[0].id : null
+  );
+
   return (
     <div
       className={clsx('docking-layout', className)}
@@ -151,19 +214,22 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
         height: '100vh',
         width: '100vw',
         overflow: 'hidden',
-        backgroundColor: '#ffffff',
+        backgroundColor: 'var(--background)',
+        color: 'var(--foreground)',
         ...style,
       }}
     >
+      {/* Overlay für geschlossene Panels wurde entfernt! */}
       {/* Sidebar für unpinned Panels und Collapse-Button: nur sichtbar, wenn unpinned Panels ODER collapsed (links) */}
-      {columns[0] && (
-        (columns[0].panels.some(panel => panel.pinned === false) || columns[0].collapsed) && (
+      {visibleColumns[0] && (
+        (visibleColumns[0].panels.some(panel => panel.pinned === false) || visibleColumns[0].collapsed) && (
           <div
             className="docking-sidebar docking-sidebar--left"
             style={{
               width: 36,
-              background: '#f5f5f5',
-              borderRight: '1px solid #e0e0e0',
+              background: 'var(--sidebar-bg)',
+              color: 'var(--icon-color)',
+              borderRight: '1px solid var(--border)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -171,7 +237,7 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
               position: 'relative',
             }}
           >
-            {columns[0].panels.filter(panel => panel.pinned === false).map(panel => (
+            {visibleColumns[0].panels.filter(panel => panel.pinned === false).map(panel => (
               <button
                 key={panel.id}
                 style={{
@@ -179,7 +245,8 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
                   height: 100,
                   margin: '6px 0',
                   border: 'none',
-                  background: openLeftDrawer === panel.id ? '#e0e0e0' : 'transparent',
+                  background: openLeftDrawer === panel.id ? 'var(--sidebar-tab-active-bg, var(--border))' : 'transparent',
+                  color: 'var(--icon-color)',
                   borderRadius: 4,
                   cursor: 'pointer',
                   fontWeight: 500,
@@ -211,7 +278,7 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
         )
       )}
       {/* Drawer-Overlay für unpinned Panel (links) */}
-      {openLeftDrawer && columns[0] && (
+      {openLeftDrawer && visibleColumns[0] && (
         <div
           id="left-drawer"
           style={{
@@ -220,20 +287,21 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
             left: 36,
             height: '100vh',
             width: 320,
-            background: '#fff',
-            borderRight: '1px solid #e0e0e0',
+            background: 'var(--panel-bg)',
+            color: 'var(--icon-color)',
+            borderRight: '1px solid var(--border)',
             boxShadow: '2px 0 8px rgba(0,0,0,0.08)',
             zIndex: 4000,
             display: 'flex',
             flexDirection: 'column',
           }}
         >
-          {columns[0].panels.filter(p => p.pinned === false && p.id === openLeftDrawer).map(panel => (
+          {visibleColumns[0].panels.filter(p => p.pinned === false && p.id === openLeftDrawer).map(panel => (
             <div key={panel.id} style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-              <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid #e0e0e0', padding: '8px 12px', background: '#f5f5f5' }}>
+              <div className="panel-header">
                 <span style={{ flex: 1, fontWeight: 500 }}>{panel.title}</span>
                 <button
-                  style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 16, marginRight: 8 }}
+                  style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 16, marginRight: 8, color: 'var(--icon-color)' }}
                   title={panel.pinned ? 'Unpin' : 'Pin'}
                   onClick={() => handlePinPanel(0, panel.id, !panel.pinned)}
                 >
@@ -251,7 +319,7 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
                   )}
                 </button>
                 <button
-                  style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 16 }}
+                  style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--icon-color)' }}
                   title="Schließen"
                   onClick={() => setOpenLeftDrawer(null)}
                 >✕</button>
@@ -261,13 +329,13 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
           ))}
         </div>
       )}
-      {columns[0] && columns[0].panels.filter(p => p.pinned !== false).length > 0 && (
+      {visibleColumns[0] && visibleColumns[0].panels.filter(p => p.pinned !== false).length > 0 && (
         <div
-          className={clsx('docking-column', columns[0].className, { 'docking-column--collapsed': columns[0].collapsed })}
+          className={clsx('docking-column', visibleColumns[0].className, { 'docking-column--collapsed': visibleColumns[0].collapsed })}
           style={{
-            width: columns[0].collapsed ? COLLAPSED_WIDTH : (columns[0].width ? (typeof columns[0].width === 'number' ? `${columns[0].width}px` : columns[0].width) : 220),
-            minWidth: columns[0].collapsed ? COLLAPSED_WIDTH : columns[0].minWidth,
-            maxWidth: columns[0].collapsed ? COLLAPSED_WIDTH : columns[0].maxWidth,
+            width: visibleColumns[0].collapsed ? COLLAPSED_WIDTH : (visibleColumns[0].width ? (typeof visibleColumns[0].width === 'number' ? `${visibleColumns[0].width}px` : visibleColumns[0].width) : 220),
+            minWidth: visibleColumns[0].collapsed ? COLLAPSED_WIDTH : visibleColumns[0].minWidth,
+            maxWidth: visibleColumns[0].collapsed ? COLLAPSED_WIDTH : visibleColumns[0].maxWidth,
             flex: undefined,
             display: 'flex',
             flexDirection: 'column',
@@ -276,12 +344,12 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
           }}
         >
           {/* Panels nur anzeigen, wenn nicht collapsed */}
-          {!columns[0].collapsed && columns[0].panels.filter(p => p.pinned !== false).map((panel, idx, arr) => (
+          {!visibleColumns[0].collapsed && visibleColumns[0].panels.filter(p => p.pinned !== false).map((panel, idx, arr) => (
             <React.Fragment key={panel.id}>
               <Panel
                 config={{ ...panel, center: true }}
-                onToggle={(id: string, collapsed: boolean) => handlePanelToggle(columns[0].id, id, collapsed)}
-                onClose={(id: string) => handlePanelClose(columns[0].id, id)}
+                onToggle={(id: string, collapsed: boolean) => handlePanelToggle(visibleColumns[0].id, id, collapsed)}
+                onClose={(id: string) => handlePanelClose(visibleColumns[0].id, id)}
                 onPinChange={(id: string, pinned: boolean) => handlePinPanel(0, id, pinned)}
               />
               {/* Moderner Split-ResizeHandle zwischen Panels (außer nach dem letzten) */}
@@ -297,14 +365,14 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
           ))}
         </div>
       )}
-      {columns.length > 1 && columns[0] && columns[0].panels.filter(p => p.pinned !== false).length > 0 && (
+      {visibleColumns.length > 1 && visibleColumns[0] && visibleColumns[0].panels.filter(p => p.pinned !== false).length > 0 && (
         <ResizeHandle
           position="horizontal"
           onResizeStart={e => handleColumnResizeStart(0, e)}
         />
       )}
-      {columns.map((col, colIdx) => {
-        if (colIdx === 0 || colIdx === columns.length - 1) return null; // Linke und rechte Spalte werden separat gerendert!
+      {visibleColumns.map((col, colIdx) => {
+        if (colIdx === 0 || colIdx === visibleColumns.length - 1) return null; // Linke und rechte Spalte werden separat gerendert!
         // Neue Flex-Logik: Nur die mittlere Spalte (center) ist flexibel
         let style: React.CSSProperties = {
           display: 'flex',
@@ -312,7 +380,7 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
           overflow: 'hidden',
           ...col.style,
         };
-        if (colIdx === 0 || colIdx === columns.length - 1) {
+        if (colIdx === 0 || colIdx === visibleColumns.length - 1) {
           // Linke und rechte Spalte: immer feste Breite
           style.width = col.collapsed ? COLLAPSED_WIDTH : (col.width ? (typeof col.width === 'number' ? `${col.width}px` : col.width) : 220);
           style.minWidth = col.collapsed ? COLLAPSED_WIDTH : col.minWidth;
@@ -327,11 +395,16 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
         }
         // Center-Bereich: Overlay-Logik für unpinned Panels
         if (col.id === 'center') {
-          const pinnedPanels = col.panels.filter(p => p.pinned !== false);
-          const unpinnedPanels = col.panels.filter(p => p.pinned === false);
-          const [openCenterDrawer, setOpenCenterDrawer] = useState<string | null>(null);
-          // Tabs für unpinned Panels unten
-          const centerTabs = unpinnedPanels.map(p => ({ label: p.title, id: p.id }));
+          const centerPanels = col.panels.filter(p => p.position !== 'bottom');
+          const bottomPanels = col.panels.filter(p => p.position === 'bottom');
+          // Synchronisiere activeBottomTabId, wenn Panels sich ändern
+          React.useEffect(() => {
+            // Wenn das aktuell aktive Panel nicht mehr existiert, wähle das erste Panel oder null
+            if (activeBottomTabId && !bottomPanels.find(p => p.id === activeBottomTabId)) {
+              setActiveBottomTabId(bottomPanels.length > 0 ? bottomPanels[0].id : null);
+            }
+          }, [bottomPanels.map(p => p.id).join(',')]);
+          const activeBottomPanel = bottomPanels.find(p => p.id === activeBottomTabId);
           return (
             <div
               className={clsx('docking-column', col.className, { 'docking-column--collapsed': col.collapsed })}
@@ -343,53 +416,69 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
                 height: '100%',
               }}
             >
-              {/* Gerenderte Panels (pinned) */}
-              {!col.collapsed && pinnedPanels.map((panel, idx) => (
+              {/* Center-Panels wie bisher normal anzeigen */}
+              {!col.collapsed && centerPanels.map((panel, idx) => (
                 <React.Fragment key={panel.id}>
                   <Panel
                     config={{ ...panel, center: true }}
                     onToggle={(id: string, collapsed: boolean) => handlePanelToggle(col.id, id, collapsed)}
                     onClose={(id: string) => handlePanelClose(col.id, id)}
-                    onPinChange={(id: string, pinned: boolean) => handlePinPanel(colIdx, id, pinned)}
+                    onPinChange={(id: string, pinned: boolean) => {
+                      handlePinPanel(colIdx, id, pinned);
+                      // Wenn ein Bottom-Panel ungepinnt wird, Overlay schließen
+                      if (panel.position === 'bottom' && pinned === false) {
+                        setActiveBottomTabId(null);
+                      }
+                    }}
                   />
-                  {/* ResizeHandle nur zwischen pinnedPanels, wenn beide resizable sind */}
-                  {idx < pinnedPanels.length - 1 && 
-                   pinnedPanels[idx].resizable !== false && 
-                   pinnedPanels[idx + 1].resizable !== false && (
-                    <ResizeHandle
-                      position="vertical"
-                      onResizeStart={(e: React.MouseEvent<HTMLDivElement>) => handleSplitResizeStart(colIdx, idx, e)}
-                    />
-                  )}
+                  {/* ResizeHandle nur zwischen centerPanels, wenn beide resizable sind */}
+                  {idx < centerPanels.length - 1 &&
+                    centerPanels[idx].resizable !== false &&
+                    centerPanels[idx + 1].resizable !== false && (
+                      <ResizeHandle
+                        position="vertical"
+                        onResizeStart={(e: React.MouseEvent<HTMLDivElement>) => handleSplitResizeStart(colIdx, idx, e)}
+                      />
+                    )}
                 </React.Fragment>
               ))}
-              {/* Tabs-Leiste unten für unpinned Panels (ohne Header) */}
-              {unpinnedPanels.length > 0 && (
-                <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, width: '100%', zIndex: 2, background: '#fafafa', borderTop: '1px solid #e0e0e0' }}>
+              {/* Tabbar unten für Bottom-Panels */}
+              {bottomPanels.length > 0 && (
+                <div className="panel-header">
                   <div style={{ display: 'flex', height: 28 }}>
-                    {centerTabs.map(tab => (
+                    {bottomPanels.map(tab => (
                       <button
                         key={tab.id}
-                        onClick={() => setOpenCenterDrawer(tab.id)}
+                        onClick={() => setActiveBottomTabId(tab.id)}
+                        className={activeBottomTabId === tab.id ? 'tab active tab-bottom-active' : 'tab'}
                         style={{
                           padding: '4px 14px',
                           border: 'none',
-                          borderBottom: openCenterDrawer === tab.id ? '2px solid #1976d2' : 'none',
-                          background: 'none',
+                          borderBottom: activeBottomTabId === tab.id ? '2px solid var(--tab-active)' : 'none',
+                          background: 'var(--tab-bg)',
                           cursor: 'pointer',
-                          fontWeight: openCenterDrawer === tab.id ? 600 : 400,
-                          color: openCenterDrawer === tab.id ? '#1976d2' : '#333',
+                          fontWeight: activeBottomTabId === tab.id ? 600 : 400,
+                          color: activeBottomTabId === tab.id ? 'var(--tab-fg-active)' : 'var(--tab-fg)',
                           height: '100%',
                         }}
                       >
-                        {tab.label}
+                        {tab.title}
                       </button>
                     ))}
                   </div>
                 </div>
               )}
-              {/* Overlay/Drawer für unpinned Panel (center) */}
-              {openCenterDrawer && unpinnedPanels.find(p => p.id === openCenterDrawer) && (
+              {/* Bottom-Panel anzeigen: als Overlay, wenn ungepinnt, sonst normal */}
+              {activeBottomPanel && activeBottomPanel.pinned !== false && !col.collapsed && (
+                <Panel
+                  key={activeBottomPanel.id}
+                  config={{ ...activeBottomPanel, center: true }}
+                  onToggle={(id: string, collapsed: boolean) => handlePanelToggle(col.id, id, collapsed)}
+                  onClose={(id: string) => handlePanelClose(col.id, id)}
+                  onPinChange={(id: string, pinned: boolean) => handlePinPanel(colIdx, id, pinned)}
+                />
+              )}
+              {activeBottomPanel && activeBottomPanel.pinned === false && (
                 <div
                   id="center-drawer"
                   style={{
@@ -398,45 +487,40 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
                     right: 0,
                     bottom: 28, // Höhe der Tabs-Leiste
                     height: '40vh',
-                    background: '#fff',
-                    borderTop: '1px solid #e0e0e0',
+                    background: 'var(--panel-bg)',
+                    color: 'var(--foreground)',
+                    borderTop: '1px solid var(--border)',
                     boxShadow: '0 -2px 8px rgba(0,0,0,0.08)',
                     zIndex: 4000,
                     display: 'flex',
                     flexDirection: 'column',
                   }}
                 >
-                  {unpinnedPanels.filter(p => p.id === openCenterDrawer).map(panel => (
-                    <div key={panel.id} style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid #e0e0e0', padding: '8px 12px', background: '#f5f5f5' }}>
-                        <span style={{ flex: 1, fontWeight: 500 }}>{panel.title}</span>
-                        <button
-                          style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 16, marginRight: 8 }}
-                          title={panel.pinned ? 'Unpin' : 'Pin'}
-                          onClick={() => { handlePinPanel(colIdx, panel.id, !panel.pinned); setOpenCenterDrawer(null); }}
-                        >
-                          {panel.pinned ? (
-                            // Pin: Gerade
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M16,12V4H17V2H7V4H8V12L6,14V16H11.2V22H12.8V16H18V14L16,12Z"/>
-                            </svg>
-                          ) : (
-                            // Unpin: Pin mit diagonaler Linie
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M16,12V4H17V2H7V4H8V12L6,14V16H11.2V22H12.8V16H18V14L16,12Z"/>
-                              <line x1="4" y1="20" x2="20" y2="4" stroke="currentColor" strokeWidth="2" />
-                            </svg>
-                          )}
-                        </button>
-                        <button
-                          style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 16 }}
-                          title="Schließen"
-                          onClick={() => setOpenCenterDrawer(null)}
-                        >✕</button>
-                      </div>
-                      <div style={{ flex: 1, overflow: 'auto', padding: 12 }}>{panel.content}</div>
-                    </div>
-                  ))}
+                  <div className="panel-header">
+                    <span style={{ flex: 1, fontWeight: 500 }}>{activeBottomPanel.title}</span>
+                    <button
+                      style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 16, marginRight: 8, color: 'var(--icon-color)' }}
+                      title={activeBottomPanel.pinned ? 'Unpin' : 'Pin'}
+                      onClick={() => { handlePinPanel(colIdx, activeBottomPanel.id, !activeBottomPanel.pinned); setActiveBottomTabId(null); }}
+                    >
+                      {activeBottomPanel.pinned ? (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M16,12V4H17V2H7V4H8V12L6,14V16H11.2V22H12.8V16H18V14L16,12Z"/>
+                        </svg>
+                      ) : (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M16,12V4H17V2H7V4H8V12L6,14V16H11.2V22H12.8V16H18V14L16,12Z"/>
+                          <line x1="4" y1="20" x2="20" y2="4" stroke="currentColor" strokeWidth="2" />
+                        </svg>
+                      )}
+                    </button>
+                    <button
+                      style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--icon-color)' }}
+                      title="Schließen"
+                      onClick={() => setActiveBottomTabId(null)}
+                    >✕</button>
+                  </div>
+                  <div style={{ flex: 1, overflow: 'auto', padding: 12 }}>{activeBottomPanel.content}</div>
                 </div>
               )}
             </div>
@@ -488,7 +572,7 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
               ))}
             </div>
             {/* Moderner Spalten-ResizeHandle (außer nach der letzten Spalte) */}
-            {colIdx < columns.length - 1 && (
+            {colIdx < visibleColumns.length - 1 && (
               <ResizeHandle
                 position="horizontal"
                 onResizeStart={(e: React.MouseEvent<HTMLDivElement>) => handleColumnResizeStart(colIdx, e)}
@@ -498,14 +582,12 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
         )
       })}
       {/* Sidebar für unpinned Panels und Collapse-Button: nur sichtbar, wenn unpinned Panels ODER collapsed (rechts) */}
-      {columns[columns.length-1] && (
-        (columns[columns.length-1].panels.some(panel => panel.pinned === false) || columns[columns.length-1].collapsed) && (
+      {visibleColumns[visibleColumns.length-1] && (
+        (visibleColumns[visibleColumns.length-1].panels.some(panel => panel.pinned === false) || visibleColumns[visibleColumns.length-1].collapsed) && (
           <div
             className="docking-sidebar docking-sidebar--right"
             style={{
               width: 36,
-              background: '#f5f5f5',
-              borderLeft: '1px solid #e0e0e0',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -516,17 +598,15 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
               order: 9999,
             }}
           >
-            {columns[columns.length-1].panels.filter(panel => panel.pinned === false).map(panel => (
+            {visibleColumns[visibleColumns.length-1].panels.filter(panel => panel.pinned === false).map(panel => (
               <button
                 key={panel.id}
+                className={clsx('sidebar-tab-btn', { active: openRightDrawer === panel.id })}
                 style={{
                   width: 32,
                   height: 100,
                   margin: '6px 0',
-                  border: 'none',
-                  background: openRightDrawer === panel.id ? '#e0e0e0' : 'transparent',
                   borderRadius: 4,
-                  cursor: 'pointer',
                   fontWeight: 500,
                   fontSize: 14,
                   display: 'flex',
@@ -534,6 +614,7 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
                   justifyContent: 'center',
                   padding: 0,
                   position: 'relative',
+                  color: 'var(--icon-color)'
                 }}
                 title={panel.title}
                 onClick={() => setOpenRightDrawer(panel.id)}
@@ -556,31 +637,22 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
         )
       )}
       {/* Drawer-Overlay für unpinned Panel (rechts) */}
-      {openRightDrawer && columns[columns.length-1] && (
+      {openRightDrawer && visibleColumns[visibleColumns.length-1] && (
         <div
           id="right-drawer"
+          className="drawer-overlay"
           style={{
-            position: 'fixed',
-            top: 0,
             right: 36,
-            height: '100vh',
-            width: 320,
-            background: '#fff',
-            borderLeft: '1px solid #e0e0e0',
-            boxShadow: '-2px 0 8px rgba(0,0,0,0.08)',
-            zIndex: 4000,
-            display: 'flex',
-            flexDirection: 'column',
           }}
         >
-          {columns[columns.length-1].panels.filter(p => p.pinned === false && p.id === openRightDrawer).map(panel => (
+          {visibleColumns[visibleColumns.length-1].panels.filter(p => p.pinned === false && p.id === openRightDrawer).map(panel => (
             <div key={panel.id} style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-              <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid #e0e0e0', padding: '8px 12px', background: '#f5f5f5' }}>
+              <div className="panel-header">
                 <span style={{ flex: 1, fontWeight: 500 }}>{panel.title}</span>
                 <button
-                  style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 16, marginRight: 8 }}
+                  style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 16, marginRight: 8, color: 'var(--icon-color)' }}
                   title={panel.pinned ? 'Unpin' : 'Pin'}
-                  onClick={() => handlePinPanel(columns.length-1, panel.id, !panel.pinned)}
+                  onClick={() => handlePinPanel(visibleColumns.length-1, panel.id, !panel.pinned)}
                 >
                   {panel.pinned ? (
                     // Pin: Gerade
@@ -596,7 +668,7 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
                   )}
                 </button>
                 <button
-                  style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 16 }}
+                  style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--icon-color)' }}
                   title="Schließen"
                   onClick={() => setOpenRightDrawer(null)}
                 >✕</button>
@@ -607,20 +679,20 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
         </div>
       )}
       {/* ResizeHandle zwischen Center und rechter Spalte */}
-      {columns.length > 1 && columns[columns.length-1] && columns[columns.length-1].panels.filter(p => p.pinned !== false).length > 0 && (
+      {visibleColumns.length > 1 && visibleColumns[visibleColumns.length-1] && visibleColumns[visibleColumns.length-1].panels.filter(p => p.pinned !== false).length > 0 && (
         <ResizeHandle
           position="horizontal"
-          onResizeStart={e => handleColumnResizeStart(columns.length - 2, e)}
+          onResizeStart={e => handleColumnResizeStart(visibleColumns.length - 2, e)}
         />
       )}
       {/* Rechte Spalte (Panels mit pinned: true) */}
-      {columns[columns.length-1] && columns[columns.length-1].panels.filter(p => p.pinned !== false).length > 0 && (
+      {visibleColumns[visibleColumns.length-1] && visibleColumns[visibleColumns.length-1].panels.filter(p => p.pinned !== false).length > 0 && (
         <div
-          className={clsx('docking-column', columns[columns.length-1].className, { 'docking-column--collapsed': columns[columns.length-1].collapsed })}
+          className={clsx('docking-column', visibleColumns[visibleColumns.length-1].className, { 'docking-column--collapsed': visibleColumns[visibleColumns.length-1].collapsed })}
           style={{
-            width: columns[columns.length-1].collapsed ? COLLAPSED_WIDTH : (columns[columns.length-1].width ? (typeof columns[columns.length-1].width === 'number' ? `${columns[columns.length-1].width}px` : columns[columns.length-1].width) : 220),
-            minWidth: columns[columns.length-1].collapsed ? COLLAPSED_WIDTH : columns[columns.length-1].minWidth,
-            maxWidth: columns[columns.length-1].collapsed ? COLLAPSED_WIDTH : columns[columns.length-1].maxWidth,
+            width: visibleColumns[visibleColumns.length-1].collapsed ? COLLAPSED_WIDTH : (visibleColumns[visibleColumns.length-1].width ? (typeof visibleColumns[visibleColumns.length-1].width === 'number' ? `${visibleColumns[visibleColumns.length-1].width}px` : visibleColumns[visibleColumns.length-1].width) : 220),
+            minWidth: visibleColumns[visibleColumns.length-1].collapsed ? COLLAPSED_WIDTH : visibleColumns[visibleColumns.length-1].minWidth,
+            maxWidth: visibleColumns[visibleColumns.length-1].collapsed ? COLLAPSED_WIDTH : visibleColumns[visibleColumns.length-1].maxWidth,
             flex: undefined,
             display: 'flex',
             flexDirection: 'column',
@@ -629,20 +701,20 @@ export const DockingLayout: React.FC<DockingLayoutProps> = ({
           }}
         >
           {/* Panels nur anzeigen, wenn nicht collapsed */}
-          {!columns[columns.length-1].collapsed && columns[columns.length-1].panels.filter(p => p.pinned !== false).map((panel, idx, arr) => (
+          {!visibleColumns[visibleColumns.length-1].collapsed && visibleColumns[visibleColumns.length-1].panels.filter(p => p.pinned !== false).map((panel, idx, arr) => (
             <React.Fragment key={panel.id}>
               <Panel
                 config={{ ...panel, center: true }}
-                onToggle={(id: string, collapsed: boolean) => handlePanelToggle(columns[columns.length-1].id, id, collapsed)}
-                onClose={(id: string) => handlePanelClose(columns[columns.length-1].id, id)}
-                onPinChange={(id: string, pinned: boolean) => handlePinPanel(columns.length-1, id, pinned)}
+                onToggle={(id: string, collapsed: boolean) => handlePanelToggle(visibleColumns[visibleColumns.length-1].id, id, collapsed)}
+                onClose={(id: string) => handlePanelClose(visibleColumns[visibleColumns.length-1].id, id)}
+                onPinChange={(id: string, pinned: boolean) => handlePinPanel(visibleColumns.length-1, id, pinned)}
               />
               {idx < arr.length - 1 && 
                arr[idx].resizable !== false && 
                arr[idx + 1].resizable !== false && (
                 <ResizeHandle
                   position="vertical"
-                  onResizeStart={(e: React.MouseEvent<HTMLDivElement>) => handleSplitResizeStart(columns.length-1, idx, e)}
+                  onResizeStart={(e: React.MouseEvent<HTMLDivElement>) => handleSplitResizeStart(visibleColumns.length-1, idx, e)}
                 />
               )}
             </React.Fragment>

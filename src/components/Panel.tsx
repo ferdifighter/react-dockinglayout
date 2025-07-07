@@ -38,8 +38,6 @@ export const Panel: React.FC<PanelProps> = ({
       position: 'relative',
       display: 'flex',
       flexDirection: 'column',
-      backgroundColor: '#ffffff',
-      border: '1px solid #e0e0e0',
       ...style,
     }
 
@@ -95,23 +93,9 @@ export const Panel: React.FC<PanelProps> = ({
           className={clsx('panel-header', {
             'panel-header--collapsed': collapsed,
           })}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            padding: '8px 12px',
-            backgroundColor: '#f5f5f5',
-            borderBottom: '1px solid #e0e0e0',
-            fontSize: '14px',
-            fontWeight: 500,
-            cursor: 'pointer',
-            userSelect: 'none',
-            height: HEADER_HEIGHT,
-            minHeight: HEADER_HEIGHT,
-            maxHeight: HEADER_HEIGHT,
-          }}
           onClick={isCenter && onPinChange ? undefined : handleToggle}
         >
-          <span style={{ flex: 1 }}>{panelTitle}</span>
+          <span className="panel-title" style={{ flex: 1 }}>{panelTitle}</span>
           {/* Center-Bereich: Pin/Unpin-Button */}
           {isCenter && onPinChange && config.canPin !== false && (
             <button
@@ -119,14 +103,7 @@ export const Panel: React.FC<PanelProps> = ({
                 e.stopPropagation();
                 onPinChange(config.id, false);
               }}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '14px',
-                padding: '2px',
-                marginLeft: '8px',
-              }}
+              className="panel-header-btn"
               title={'Unpin'}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
@@ -141,13 +118,7 @@ export const Panel: React.FC<PanelProps> = ({
                 e.stopPropagation()
                 handleToggle()
               }}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '12px',
-                padding: '2px',
-              }}
+              className="panel-header-btn"
             >
               {collapsed ? '▶' : '▼'}
             </button>
@@ -158,14 +129,7 @@ export const Panel: React.FC<PanelProps> = ({
                 e.stopPropagation()
                 onClose(config.id)
               }}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '12px',
-                padding: '2px',
-                marginLeft: '8px',
-              }}
+              className="panel-header-btn"
             >
               ✕
             </button>
@@ -176,14 +140,7 @@ export const Panel: React.FC<PanelProps> = ({
                 e.stopPropagation()
                 onPinChange(config.id, !config.pinned)
               }}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '14px',
-                padding: '2px',
-                marginLeft: '8px',
-              }}
+              className="panel-header-btn"
               title={config.pinned ? 'Unpin' : 'Pin'}
             >
               {config.pinned ? (
@@ -223,7 +180,7 @@ export const Panel: React.FC<PanelProps> = ({
         )}
         {/* Tabs-Leiste immer am unteren Rand, wenn Tabs vorhanden */}
         {hasTabs && (
-          <div style={{ borderTop: '1px solid #e0e0e0', height: TABBAR_HEIGHT, minHeight: TABBAR_HEIGHT, maxHeight: TABBAR_HEIGHT }}>
+          <div className="panel-tabs-bar" style={{ height: TABBAR_HEIGHT, minHeight: TABBAR_HEIGHT, maxHeight: TABBAR_HEIGHT }}>
             <Tabs
               tabs={tabs}
               active={activeTab}

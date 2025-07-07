@@ -1,0 +1,25 @@
+html.theme-dark, body.theme-dark {
+  --background: #181c20;
+  --foreground: #f5f5f5;
+  --border: #444;
+  --sidebar-bg: #23272c;
+  --header-bg: #23272c;
+  --primary: #90caf9;
+  --panel-bg: #23272c;
+  --panel-header-bg: #1a1d20;
+  --panel-header-fg: #f5f5f5;
+  --tab-bg: #23272c;
+  --tab-active: #90caf9;
+  --tab-fg: #bbb;
+  --tab-fg-active: #fff;
+  --resize-handle: #666;
+  --shadow: 0 2px 8px rgba(0,0,0,0.32);
+  --text-secondary: #bbb;
+  --input-bg: #181c20;
+  --input-border: #444;
+  --sidebar-tab-bg: #23272c;
+  --sidebar-tab-fg: #bbb;
+  --sidebar-tab-active-bg: #333;
+  --sidebar-tab-active-fg: #fff;
+  --icon-color: #f5f5f5;
+} 

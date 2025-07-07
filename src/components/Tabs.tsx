@@ -27,11 +27,8 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, active = 0, onTabChange, posit
 
   const tabBar = (
     <div
+      className={"tab-bar" + (position === 'bottom' ? ' tab-bar-bottom' : '')}
       style={{
-        display: 'flex',
-        borderTop: position === 'bottom' ? '1px solid #e0e0e0' : undefined,
-        borderBottom: position === 'top' ? '1px solid #e0e0e0' : undefined,
-        background: '#fafafa',
         height: 28,
         minHeight: 28,
         maxHeight: 28,
@@ -41,17 +38,9 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, active = 0, onTabChange, posit
         <button
           key={tab.label}
           onClick={() => handleTabClick(idx)}
-          style={{
-            padding: '4px 14px',
-            border: 'none',
-            borderBottom: position === 'top' && currentActive === idx ? '2px solid #1976d2' : 'none',
-            borderTop: position === 'bottom' && currentActive === idx ? '2px solid #1976d2' : 'none',
-            background: 'none',
-            cursor: 'pointer',
-            fontWeight: currentActive === idx ? 600 : 400,
-            color: currentActive === idx ? '#1976d2' : '#333',
-            height: '100%',
-          }}
+          className={["tab", "debug-tab", currentActive === idx ? "active" : "", position === "top" && currentActive === idx ? "tab-top-active" : "", position === "bottom" && currentActive === idx ? "tab-bottom-active" : ""].filter(Boolean).join(" ")}
+          data-test="tabbutton"
+          style={position === 'bottom' ? { color: 'var(--tab-fg)' } : {}}
         >
           {tab.label}
         </button>
