@@ -395,4 +395,51 @@ body.theme-dark {
 .docking-panel[style*='height: 28px'] .tab.active,
 .docking-panel[style*='height: 28px'] .tab-bottom-active {
   color: var(--tab-fg-active) !important;
+}
+
+/* Theme-kompatible Form-Elemente */
+.theme-dark select,
+.theme-dark input[type="text"],
+.theme-dark textarea {
+  background: var(--input-bg, #181c20);
+  color: var(--foreground, #f5f5f5);
+  border: 1px solid var(--input-border, #444);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.theme-dark select:focus,
+.theme-dark input[type="text"]:focus,
+.theme-dark textarea:focus {
+  border-color: var(--primary, #90caf9);
+}
+.theme-dark input[type="checkbox"] {
+  accent-color: var(--primary, #90caf9);
+  background: var(--input-bg, #181c20);
+  border: 1px solid var(--input-border, #444);
+}
+
+.theme-light select,
+.theme-light input[type="text"],
+.theme-light textarea {
+  background: var(--input-bg, #fff);
+  color: var(--foreground, #222);
+  border: 1px solid var(--input-border, #e0e0e0);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.theme-light select:focus,
+.theme-light input[type="text"]:focus,
+.theme-light textarea:focus {
+  border-color: var(--primary, #1976d2);
+}
+.theme-light input[type="checkbox"] {
+  accent-color: var(--primary, #1976d2);
+  background: var(--input-bg, #fff);
+  border: 1px solid var(--input-border, #e0e0e0);
 } 

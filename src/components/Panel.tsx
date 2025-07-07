@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import clsx from 'clsx'
-import { DockingPanelConfig } from '../types'
+import { DockingPanelConfig } from '../Types'
 import { Tabs, Tab } from './Tabs'
 
 interface PanelProps {
@@ -10,6 +10,7 @@ interface PanelProps {
   onPinChange?: (id: string, pinned: boolean) => void
   className?: string
   style?: React.CSSProperties
+  contentRenderer?: (panel: DockingPanelConfig) => React.ReactNode
 }
 
 export const Panel: React.FC<PanelProps> = ({
@@ -19,6 +20,7 @@ export const Panel: React.FC<PanelProps> = ({
   onPinChange,
   className,
   style,
+  contentRenderer,
 }: PanelProps) => {
   const collapsed = !!config.collapsed;
   const hasTabs = Array.isArray((config as any).tabs) && (config as any).tabs.length > 0
@@ -27,7 +29,6 @@ export const Panel: React.FC<PanelProps> = ({
 
   // Höhe der Tabs-Leiste (z. B. 36px)
   const TABBAR_HEIGHT = hasTabs ? 28 : 0;
-  const HEADER_HEIGHT = 40;
 
   const handleToggle = () => {
     onToggle?.(config.id, !collapsed)
@@ -175,7 +176,7 @@ export const Panel: React.FC<PanelProps> = ({
           </div>
         ) : (
           <div style={{ flex: 1, overflow: 'auto', padding: 12 }}>
-            {config.content}
+            {contentRenderer ? contentRenderer(config) : config.content}
           </div>
         )}
         {/* Tabs-Leiste immer am unteren Rand, wenn Tabs vorhanden */}

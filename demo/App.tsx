@@ -1,13 +1,16 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, Suspense } from 'react'
 import { DockingLayout, DockingLayoutConfig, DockingPanelConfig } from '../src'
 import { Tabs } from '../src'
+import '../src/styles.css';
+import '../src/themes/dark.theme.css';
+import '../src/themes/light.theme.css';
 
 const PANEL_IDS = ['explorer', 'search', 'toolbox', 'editor', 'console', 'outline', 'problems']
 
 const DemoApp: React.FC = () => {
   // State für geschlossene Panels
   const [closedPanels, setClosedPanels] = useState<string[]>([])
-  const [theme, setTheme] = useState<'light' | 'dark' | 'auto'>('light')
+  const [theme, setTheme] = useState<'light' | 'dark' | 'auto'>('auto')
 
   // Panels aus der Konfiguration extrahieren (nur schließbare, keine Toolbox)
   const getClosablePanels = (config: DockingLayoutConfig): { id: string; title: string }[] => {
@@ -240,9 +243,8 @@ const DemoApp: React.FC = () => {
     <DockingLayout
       config={layoutConfig}
       onLayoutChange={handleLayoutChange}
-      closedPanels={closedPanels}
       onPanelClose={handlePanelClose}
-      theme={theme}
+      closedPanels={closedPanels}
       style={{
         height: '100vh',
         width: '100vw',

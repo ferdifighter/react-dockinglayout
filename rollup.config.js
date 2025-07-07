@@ -1,6 +1,7 @@
 import typescript from 'rollup-plugin-typescript2'
 import peerDepsExternal from 'rollup-plugin-peer-deps-external'
 import { dts } from 'rollup-plugin-dts'
+import postcss from 'rollup-plugin-postcss'
 
 export default [
   {
@@ -19,6 +20,7 @@ export default [
     ],
     plugins: [
       peerDepsExternal(),
+      postcss(),
       typescript({
         tsconfig: './tsconfig.json',
         declaration: true,

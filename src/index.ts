@@ -1,11 +1,17 @@
-import './styles.css'
-import './themes/light.theme.css'
-import './themes/dark.theme.css'
 export * from './components/DockingLayout'
 export * from './components/Panel'
 export * from './components/ResizeHandle'
 export * from './components/Tabs'
-export * from './types'
+export * from './Types'
+
+import type {
+  DockingLayoutProps,
+  DockingLayoutConfig,
+  DockingPanelConfig,
+  DockingColumnConfig,
+  ResizeHandleProps,
+  PanelPosition,
+} from './Types'
 
 export type {
   DockingLayoutProps,

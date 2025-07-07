@@ -9,7 +9,7 @@ const COLLAPSED_WIDTH = 36
 interface DockingLayoutWithClosedProps extends DockingLayoutProps {
   closedPanels: string[]
   onPanelClose: (panelId: string) => void
-  theme?: 'light' | 'dark' | 'auto'
+  contentRenderer?: (panel: any) => React.ReactNode
 }
 
 export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
@@ -17,9 +17,9 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
   onLayoutChange,
   closedPanels,
   onPanelClose,
-  theme = 'light',
   className,
   style,
+  contentRenderer,
 }: DockingLayoutWithClosedProps) => {
   const [columns, setColumns] = useState<DockingColumnConfig[]>(config.columns)
   // Für Resizing: Referenz auf aktuelle Spalten
@@ -115,43 +115,13 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
   }, [columns, config, onLayoutChange])
 
   // Panel schließen: Callback an Demo-App
-  const handlePanelClose = useCallback((colId: string, panelId: string) => {
+  const handlePanelClose = useCallback((panelId: string) => {
     onPanelClose(panelId)
     // Wenn das geschlossene Panel das aktive Bottom-Panel ist, Overlay schließen
     if (activeBottomTabId === panelId) {
       setActiveBottomTabId(null)
     }
   }, [onPanelClose, activeBottomTabId])
-
-  // Neuer Handler für Panel-Öffnung über Checkbox
-  const handlePanelOpen = useCallback((panelId: string) => {
-    const newClosedPanels = closedPanels.filter(id => id !== panelId)
-    setColumns(prevCols => {
-      const cols = [...prevCols]
-      const col = { ...cols[cols.findIndex(c => c.id === 'center')] }
-      const panels = [...col.panels]
-      panels[panels.findIndex(p => p.id === panelId)] = { ...panels[panels.findIndex(p => p.id === panelId)], pinned: true }
-      cols[cols.findIndex(c => c.id === 'center')] = { ...col, panels }
-      onLayoutChange?.({ ...config, columns: cols })
-      return cols
-    })
-  }, [columns, config, onLayoutChange, closedPanels])
-
-  // Hilfsfunktion: Alle verfügbaren Panels sammeln
-  const getAllPanels = useCallback(() => {
-    const allPanels: { id: string; title: string; columnId: string; visible: boolean }[] = []
-    columns.forEach(col => {
-      col.panels.forEach(panel => {
-        allPanels.push({
-          id: panel.id,
-          title: panel.title,
-          columnId: col.id,
-          visible: !closedPanels.includes(panel.id)
-        })
-      })
-    })
-    return allPanels
-  }, [columns, closedPanels])
 
   // Panels nach closedPanels filtern
   const getVisibleColumns = useCallback(() => {
@@ -350,7 +320,7 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
                   onClick={() => setOpenLeftDrawer(null)}
                 >✕</button>
               </div>
-              <div style={{ flex: 1, overflow: 'auto', padding: 12 }}>{panel.content}</div>
+              <div style={{ flex: 1, overflow: 'auto', padding: 12 }}>{contentRenderer ? contentRenderer(panel) : panel.content}</div>
             </div>
           ))}
         </div>
@@ -375,8 +345,9 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
               <Panel
                 config={{ ...panel, center: true }}
                 onToggle={(id: string, collapsed: boolean) => handlePanelToggle(visibleColumns[0].id, id, collapsed)}
-                onClose={(id: string) => handlePanelClose(visibleColumns[0].id, id)}
+                onClose={(id: string) => handlePanelClose(id)}
                 onPinChange={(id: string, pinned: boolean) => handlePinPanel(0, id, pinned)}
+                contentRenderer={contentRenderer}
               />
               {/* Moderner Split-ResizeHandle zwischen Panels (außer nach dem letzten) */}
               {idx < arr.length - 1 &&
@@ -448,7 +419,7 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
                   <Panel
                     config={{ ...panel, center: true }}
                     onToggle={(id: string, collapsed: boolean) => handlePanelToggle(col.id, id, collapsed)}
-                    onClose={(id: string) => handlePanelClose(col.id, id)}
+                    onClose={(id: string) => handlePanelClose(id)}
                     onPinChange={(id: string, pinned: boolean) => {
                       handlePinPanel(colIdx, id, pinned);
                       // Wenn ein Bottom-Panel ungepinnt wird, Overlay schließen
@@ -456,6 +427,7 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
                         setActiveBottomTabId(null);
                       }
                     }}
+                    contentRenderer={contentRenderer}
                   />
                   {/* ResizeHandle nur zwischen centerPanels, wenn beide resizable sind */}
                   {idx < centerPanels.length - 1 &&
@@ -507,8 +479,9 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
                   key={activeBottomPanel.id}
                   config={{ ...activeBottomPanel, center: true }}
                   onToggle={(id: string, collapsed: boolean) => handlePanelToggle(col.id, id, collapsed)}
-                  onClose={(id: string) => handlePanelClose(col.id, id)}
+                  onClose={(id: string) => handlePanelClose(id)}
                   onPinChange={(id: string, pinned: boolean) => handlePinPanel(colIdx, id, pinned)}
+                  contentRenderer={contentRenderer}
                 />
               )}
               {activeBottomPanel && activeBottomPanel.pinned === false && (
@@ -594,8 +567,9 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
                   <Panel
                     config={{ ...panel, center: true }}
                     onToggle={(id: string, collapsed: boolean) => handlePanelToggle(col.id, id, collapsed)}
-                    onClose={(id: string) => handlePanelClose(col.id, id)}
+                    onClose={(id: string) => handlePanelClose(id)}
                     onPinChange={(id: string, pinned: boolean) => handlePinPanel(colIdx, id, pinned)}
+                    contentRenderer={contentRenderer}
                   />
                   {/* ResizeHandle nur zwischen expandedPanels, wenn beide resizable sind */}
                   {idx < expandedPanels.length - 1 && 
@@ -614,8 +588,9 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
                   <Panel
                     config={{ ...panel, size: undefined }}
                     onToggle={(id: string, collapsed: boolean) => handlePanelToggle(col.id, id, collapsed)}
-                    onClose={(id: string) => handlePanelClose(col.id, id)}
+                    onClose={(id: string) => handlePanelClose(id)}
                     onPinChange={(id: string, pinned: boolean) => handlePinPanel(colIdx, id, pinned)}
+                    contentRenderer={contentRenderer}
                   />
                 </div>
               ))}
@@ -722,7 +697,7 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
                   onClick={() => setOpenRightDrawer(null)}
                 >✕</button>
               </div>
-              <div style={{ flex: 1, overflow: 'auto', padding: 12 }}>{panel.content}</div>
+              <div style={{ flex: 1, overflow: 'auto', padding: 12 }}>{contentRenderer ? contentRenderer(panel) : panel.content}</div>
             </div>
           ))}
         </div>
@@ -755,8 +730,9 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
               <Panel
                 config={{ ...panel, center: true }}
                 onToggle={(id: string, collapsed: boolean) => handlePanelToggle(visibleColumns[visibleColumns.length-1].id, id, collapsed)}
-                onClose={(id: string) => handlePanelClose(visibleColumns[visibleColumns.length-1].id, id)}
+                onClose={(id: string) => handlePanelClose(id)}
                 onPinChange={(id: string, pinned: boolean) => handlePinPanel(visibleColumns.length-1, id, pinned)}
+                contentRenderer={contentRenderer}
               />
               {idx < arr.length - 1 && 
                arr[idx].resizable !== false && 
