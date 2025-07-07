@@ -3,6 +3,7 @@ export type PanelPosition = 'left' | 'right' | 'top' | 'bottom' | 'center'
 export interface DockingPanelConfig {
   id: string
   title: string
+  position?: PanelPosition
   size?: number | string
   minSize?: number
   maxSize?: number

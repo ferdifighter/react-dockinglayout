@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react'
-import { DockingLayoutProps, DockingColumnConfig } from '../types'
+import { DockingLayoutProps, DockingColumnConfig } from '../Types'
 import { Panel } from './Panel'
 import { ResizeHandle } from './ResizeHandle'
 import clsx from 'clsx'
@@ -15,7 +15,6 @@ interface DockingLayoutWithClosedProps extends DockingLayoutProps {
 export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
   config,
   onLayoutChange,
-  onPanelVisibilityChange,
   closedPanels,
   onPanelClose,
   theme = 'light',
@@ -29,6 +28,17 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
 
   // Drawer-Overlay-Logik für unpinned Panels (links)
   const [openLeftDrawer, setOpenLeftDrawer] = useState<string | null>(null)
+
+  // GLOBALER STATE für aktives Bottom-Panel (Center-Bereich)
+  const centerCol = config.columns.find(col => col.id === 'center');
+  const bottomPanelsGlobal = centerCol ? centerCol.panels.filter(p => p.position === 'bottom') : [];
+  const [activeBottomTabId, setActiveBottomTabId] = useState<string | null>(
+    bottomPanelsGlobal.length > 0 ? bottomPanelsGlobal[0].id : null
+  );
+  // State für das ursprünglich aktive angepinnte Panel (für Click-Outside-Recovery)
+  const [originalActiveTabId, setOriginalActiveTabId] = useState<string | null>(
+    bottomPanelsGlobal.length > 0 ? bottomPanelsGlobal[0].id : null
+  );
 
   // Drawer-Overlay-Logik für unpinned Panels (rechts)
   const [openRightDrawer, setOpenRightDrawer] = useState<string | null>(null)
@@ -57,6 +67,25 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [openRightDrawer])
+
+  // Click-Outside-Logik für Center-Drawer (Bottom-Panel-Overlay)
+  useEffect(() => {
+    if (!activeBottomTabId) return
+    const handleClick = (e: MouseEvent) => {
+      const drawer = document.getElementById('center-drawer')
+      if (drawer && !drawer.contains(e.target as Node)) {
+        // Wenn wir ein ungepinntes Panel haben, gehe zurück zum ursprünglichen angepinnten Panel
+        const currentActivePanel = bottomPanelsGlobal.find(p => p.id === activeBottomTabId);
+        if (currentActivePanel && currentActivePanel.pinned === false) {
+          setActiveBottomTabId(originalActiveTabId);
+        } else {
+          setActiveBottomTabId(null);
+        }
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [activeBottomTabId, originalActiveTabId, bottomPanelsGlobal])
 
   // Pin/Unpin-Handler für Panels (Panel wird wirklich verschoben)
   const handlePinPanel = (colIdx: number, panelId: string, pinned: boolean) => {
@@ -88,7 +117,11 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
   // Panel schließen: Callback an Demo-App
   const handlePanelClose = useCallback((colId: string, panelId: string) => {
     onPanelClose(panelId)
-  }, [onPanelClose])
+    // Wenn das geschlossene Panel das aktive Bottom-Panel ist, Overlay schließen
+    if (activeBottomTabId === panelId) {
+      setActiveBottomTabId(null)
+    }
+  }, [onPanelClose, activeBottomTabId])
 
   // Neuer Handler für Panel-Öffnung über Checkbox
   const handlePanelOpen = useCallback((panelId: string) => {
@@ -197,13 +230,6 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
     document.addEventListener('pointermove', onPointerMove)
     document.addEventListener('pointerup', onPointerUp)
   }
-
-  // GLOBALER STATE für aktives Bottom-Panel (Center-Bereich)
-  const centerCol = config.columns.find(col => col.id === 'center');
-  const bottomPanelsGlobal = centerCol ? centerCol.panels.filter(p => p.position === 'bottom') : [];
-  const [activeBottomTabId, setActiveBottomTabId] = useState<string | null>(
-    bottomPanelsGlobal.length > 0 ? bottomPanelsGlobal[0].id : null
-  );
 
   return (
     <div
@@ -449,7 +475,14 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
                     {bottomPanels.map(tab => (
                       <button
                         key={tab.id}
-                        onClick={() => setActiveBottomTabId(tab.id)}
+                        onClick={() => {
+                          // Wenn wir von einem angepinnten Panel zu einem ungepinnten wechseln, speichere das ursprüngliche
+                          const currentActivePanel = bottomPanels.find(p => p.id === activeBottomTabId);
+                          if (currentActivePanel && currentActivePanel.pinned !== false && tab.pinned === false) {
+                            setOriginalActiveTabId(activeBottomTabId);
+                          }
+                          setActiveBottomTabId(tab.id);
+                        }}
                         className={activeBottomTabId === tab.id ? 'tab active tab-bottom-active' : 'tab'}
                         style={{
                           padding: '4px 14px',
@@ -501,7 +534,15 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
                     <button
                       style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 16, marginRight: 8, color: 'var(--icon-color)' }}
                       title={activeBottomPanel.pinned ? 'Unpin' : 'Pin'}
-                      onClick={() => { handlePinPanel(colIdx, activeBottomPanel.id, !activeBottomPanel.pinned); setActiveBottomTabId(null); }}
+                      onClick={() => { 
+                        handlePinPanel(colIdx, activeBottomPanel.id, !activeBottomPanel.pinned); 
+                        // Wenn Panel angepinnt wird, setze es als aktives Panel
+                        if (activeBottomPanel.pinned === false) {
+                          setActiveBottomTabId(activeBottomPanel.id);
+                        } else {
+                          setActiveBottomTabId(null);
+                        }
+                      }}
                     >
                       {activeBottomPanel.pinned ? (
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -517,7 +558,15 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
                     <button
                       style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--icon-color)' }}
                       title="Schließen"
-                      onClick={() => setActiveBottomTabId(null)}
+                      onClick={() => {
+                        // Wenn wir ein ungepinntes Panel haben, gehe zurück zum ursprünglichen angepinnten Panel
+                        const currentActivePanel = bottomPanelsGlobal.find(p => p.id === activeBottomTabId);
+                        if (currentActivePanel && currentActivePanel.pinned === false) {
+                          setActiveBottomTabId(originalActiveTabId);
+                        } else {
+                          setActiveBottomTabId(null);
+                        }
+                      }}
                     >✕</button>
                   </div>
                   <div style={{ flex: 1, overflow: 'auto', padding: 12 }}>{activeBottomPanel.content}</div>
