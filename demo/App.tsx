@@ -76,7 +76,7 @@ const DemoApp: React.FC = () => {
             canPin: false,
             hideHeader: true,
             resizable: false,
-            size: 100,
+            size: 300,
             content: null, // Wird unten gesetzt
           },
           {
@@ -100,6 +100,7 @@ const DemoApp: React.FC = () => {
             position: 'bottom',
             size: 200,
             resizable: true,
+            pinned: true,
             content: (
               <div style={{ fontFamily: 'monospace', fontSize: '12px' }}>
                 <div>✅ Anwendung gestartet</div>
@@ -115,6 +116,7 @@ const DemoApp: React.FC = () => {
             position: 'bottom',
             size: 200,
             resizable: true,
+            pinned: false,
             content: (
               <div style={{ fontFamily: 'monospace', fontSize: '12px' }} className="panel-content">
                 <div>user@host:~$ echo Hallo Welt</div>

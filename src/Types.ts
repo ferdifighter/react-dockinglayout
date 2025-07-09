@@ -35,6 +35,7 @@ export interface DockingColumnConfig {
 
 export interface DockingLayoutConfig {
   columns: DockingColumnConfig[]
+  closedPanels?: string[] // IDs der geschlossenen Panels
   className?: string
   style?: React.CSSProperties
   theme?: 'light' | 'dark' | 'auto'
