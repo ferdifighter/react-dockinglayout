@@ -1,4 +1,4 @@
-# React Docking Layout
+# @ferdifighter/react-docking-layout
 
 **Flexible, moderne Docking-Layout-Komponente für React – inspiriert von VS Code.**
 
@@ -9,19 +9,20 @@ Ideal für komplexe Web-UIs, Admin-Tools, Editoren, IDEs und überall, wo du Pan
 ## 🚀 Schnellstart
 
 ```bash
-npm install react-docking-layout
+npm install @ferdifighter/react-docking-layout
 ```
 
-> **Wichtig:** Importiere die CSS- und Theme-Dateien in deinem Projekt:
-> ```js
-> import "@ferdifighter/react-docking-layout/dist/styles.css";
-> import "@ferdifighter/react-docking-layout/dist/themes/dark.theme.css";
-> import "@ferdifighter/react-docking-layout/dist/themes/light.theme.css";
-> ```
+**Wichtig:** Importiere die CSS- und Theme-Dateien in deinem Projekt:
+```js
+import "@ferdifighter/react-docking-layout/dist/styles.css";
+import "@ferdifighter/react-docking-layout/dist/themes/dark.theme.css";
+import "@ferdifighter/react-docking-layout/dist/themes/light.theme.css";
+```
 
+**Minimalbeispiel:**
 ```tsx
 import React, { useState } from 'react';
-import { DockingLayout, DockingLayoutConfig } from 'react-docking-layout';
+import { DockingLayout, DockingLayoutConfig } from '@ferdifighter/react-docking-layout';
 
 const initialConfig: DockingLayoutConfig = {
   columns: [
@@ -56,58 +57,106 @@ export default function App() {
 
 ---
 
-## ✨ Features
-- **Panels überall:** links, rechts, oben, unten, zentriert
-- **Resizable & Collapsible:** Panels per Drag & Drop verschieben, ein-/ausklappen
-- **Flexible Content-API:** Beliebige React-Komponenten, Factories, Lazy-Loading (über `contentRenderer`)
-- **Themes:** Light, Dark, Auto (systemabhängig)
-- **Responsiv:** Funktioniert auf allen Bildschirmgrößen
-- **Events:** Layout-Änderungen abfangen (`onLayoutChange`)
-- **Custom Styling:** Eigene CSS-Klassen, Themes, Inline-Styles
+## ✨ Features & Beispiele
 
----
-
-## 🧩 Flexible Content-API
-
-Du kannst Panels mit statischem JSX, eigenen Komponenten, dynamischen Factories oder sogar Lazy-Loading befüllen:
-
+### 1. **Panel-Content: Beliebige Komponenten, Factories, Lazy-Loading**
 ```tsx
-const panelConfig = {
-  id: 'editor',
-  title: 'Editor',
-  content: <MeinEditor file="readme.md" />,
-};
+// Statischer JSX-Content
+{ id: 'editor', title: 'Editor', content: <MeinEditor file="readme.md" /> }
 
-// Oder dynamisch:
-const panelConfig = {
-  id: 'editor',
-  title: 'Editor',
-  content: (panel) => <MeinEditor file={panel.file} />,
-};
+// Dynamisch per Factory
+{ id: 'editor', title: 'Editor', content: (panel) => <MeinEditor file={panel.file} /> }
 
-// Oder via contentRenderer für maximale Flexibilität:
+// Mit contentRenderer für maximale Flexibilität
 <DockingLayout
   config={config}
-  contentRenderer={panel => {
-    if (typeof panel.content === 'function') return panel.content(panel);
-    return panel.content;
+  contentRenderer={panel => typeof panel.content === 'function' ? panel.content(panel) : panel.content}
+/>
+```
+
+### 2. **Panel schließen, ein-/ausblenden, Events**
+```tsx
+const [closedPanels, setClosedPanels] = useState<string[]>([]);
+
+<DockingLayout
+  config={config}
+  closedPanels={closedPanels}
+  onPanelClose={id => setClosedPanels(panels => [...panels, id])}
+/>
+```
+
+### 3. **Theme wechseln (Light, Dark, Auto)**
+```tsx
+<DockingLayout config={config} theme="dark" />
+<DockingLayout config={config} theme="light" />
+<DockingLayout config={config} theme="auto" />
+```
+
+### 4. **Panel-spezifisches Styling per API**
+```tsx
+<DockingLayout
+  config={config}
+  panelStyles={{
+    explorer: { panel: { backgroundColor: '#e3f2fd', borderColor: '#2196f3' } },
+    terminal: { panel: { backgroundColor: '#222', color: '#fff' } },
   }}
 />
 ```
 
----
+### 5. **Dynamische Styles (z.B. Zustand, User-Settings)**
+```tsx
+const [activePanel, setActivePanel] = useState('editor');
 
-## 🎨 Themes & Styling
+<DockingLayout
+  config={config}
+  panelStyles={{
+    [activePanel]: { panel: { borderColor: 'red', boxShadow: '0 0 0 2px red' } }
+  }}
+/>
+```
 
-- **Dark/Light/Auto:**
-  ```tsx
-  <DockingLayout config={config} theme="dark" />
-  <DockingLayout config={config} theme="light" />
-  <DockingLayout config={config} theme="auto" />
-  ```
-- **Eigene Styles:**
-  - Passe CSS-Variablen oder Klassen an (`.docking-layout`, `.docking-panel`, `.panel-header` ...)
-  - Eigene Theme-Dateien möglich
+### 6. **Panel gezielt per CSS oder data-Attribut stylen**
+```css
+/* Per CSS-Klasse */
+.docking-panel--id-explorer {
+  background: #e0f7fa;
+  border-color: #00bcd4;
+}
+/* Per data-Attribut */
+.docking-panel[data-panel-id="terminal"] {
+  background: #222;
+  color: #fff;
+}
+```
+
+### 7. **Globale Styles für alle Panels**
+```tsx
+<DockingLayout
+  config={config}
+  globalStyles={{
+    panel: { borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' },
+    header: { fontSize: '15px', fontWeight: 'bold' },
+  }}
+/>
+```
+
+### 8. **Events & Callbacks**
+```tsx
+<DockingLayout
+  config={config}
+  onLayoutChange={newConfig => console.log('Layout geändert:', newConfig)}
+  onPanelClose={panelId => alert('Panel geschlossen: ' + panelId)}
+/>
+```
+
+### 9. **Responsives Verhalten & Custom CSS**
+```css
+@media (max-width: 800px) {
+  .docking-layout {
+    flex-direction: column;
+  }
+}
+```
 
 ---
 
@@ -155,37 +204,27 @@ interface DockingLayoutProps {
   style?: React.CSSProperties;
   theme?: 'light' | 'dark' | 'auto';
   contentRenderer?: (panel: DockingPanelConfig) => React.ReactNode;
+  panelStyles?: Record<string, PanelStyleConfig>;
+  globalStyles?: StyleConfig;
+  enablePanelStyling?: boolean;
+}
+```
+
+### PanelStyleConfig (API für dynamische Styles)
+```ts
+interface PanelStyleConfig {
+  panel?: React.CSSProperties;
+  header?: React.CSSProperties;
+  content?: React.CSSProperties;
+  // ...weitere Bereiche (Tabs, ResizeHandle, Overlay, etc.)
+  className?: { panel?: string; header?: string; ... };
+  cssVariables?: Record<string, string>;
 }
 ```
 
 ---
 
-## ⚡️ Events & Callbacks
-
-- **onLayoutChange:**
-  Wird bei jeder Änderung (Resize, Panel schließen, etc.) aufgerufen.
-  ```tsx
-  <DockingLayout onLayoutChange={newConfig => console.log(newConfig)} ... />
-  ```
-
----
-
-## 🛠️ Eigene Komponenten & Tipps
-- Du kannst beliebige React-Komponenten als Panel-Content verwenden
-- Auch dynamische Factories oder Lazy-Loading sind möglich
-- Nutze `contentRenderer` für maximale Flexibilität
-- Panels können beliebige Props erhalten (z.B. file, user, etc.)
-
----
-
-## 🎨 Styling & Anpassung
-- Passe die mitgelieferten CSS-Variablen/Themes an
-- Überschreibe Klassen wie `.docking-layout`, `.docking-panel`, `.panel-header` usw.
-- Eigene Themes: Kopiere und passe die Theme-Dateien in `src/themes/` an
-
----
-
-## 🧑‍💻 Entwicklung & Beitrag
+## 🛠️ Entwicklung & Beitrag
 
 ```bash
 git clone <repo-url>
@@ -198,70 +237,5 @@ Pull Requests & Issues sind willkommen!
 
 ---
 
-## 📄 Lizenz
-MIT
-
----
-
-**Hinweis:** Dieses Projekt wurde mit Vibe Coding erstellt.
-
----
-
-## 🟢 Panels per State/Checkbox steuern (controlled usage)
-
-Du kannst die Sichtbarkeit der Panels komplett von außen steuern – z. B. mit Checkboxen in deiner App (wie in der Demo):
-
-```tsx
-const [closedPanels, setClosedPanels] = useState<string[]>([]);
-
-// In deiner Toolbox:
-{allPanels.map(panel => (
-  <label key={panel.id}>
-    <input
-      type="checkbox"
-      checked={!closedPanels.includes(panel.id)}
-      onChange={e => {
-        setClosedPanels(prev =>
-          e.target.checked
-            ? prev.filter(id => id !== panel.id)
-            : [...prev, panel.id]
-        );
-      }}
-    />
-    {panel.title}
-  </label>
-))}
-
-// Beim Rendern:
-<DockingLayout
-  config={config}
-  closedPanels={closedPanels}
-  onPanelClose={panelId => setClosedPanels(prev => [...prev, panelId])}
-/>
-```
-
-So hast du die volle Kontrolle, welche Panels angezeigt werden – ideal für Toolbars, User-Settings oder dynamische Layouts!
-
---- 
-
----
-
-## 🆕 Panel gezielt per CSS stylen
-
-Jedes Panel erhält jetzt automatisch ein data-Attribut:
-
-```html
-<div class="docking-panel" data-panel-id="editor">...</div>
-```
-
-Damit kannst du in deinem eigenen CSS gezielt einzelne Panels ansprechen, z.B. um Padding, Farben oder andere Styles individuell zu setzen:
-
-```css
-.docking-panel[data-panel-id="editor"] .panel-content {
-  padding: 0 !important;
-}
-```
-
-Das funktioniert auch in eigenen Projekten, z.B. in einer App.css oder globalen CSS-Datei.
-
---- 
+**Fragen, Wünsche, Feedback?**
+Erstelle ein Issue oder schreib mir direkt! 

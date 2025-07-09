@@ -60,7 +60,119 @@ export interface ResizeHandleProps {
 
 export interface DockingLayoutProps {
   config: DockingLayoutConfig
-  onLayoutChange?: (layout: DockingLayoutConfig) => void
+  onLayoutChange?: (config: DockingLayoutConfig) => void
   className?: string
   style?: React.CSSProperties
+  contentRenderer?: (panel: DockingPanelConfig) => React.ReactNode
+  // Neue Styling-Optionen
+  panelStyles?: Record<string, PanelStyleConfig>
+  globalStyles?: StyleConfig
+  theme?: string | ThemeConfig
+  enablePanelStyling?: boolean
+}
+
+export interface PanelStyleConfig {
+  // Panel-spezifische Styles
+  panel?: {
+    backgroundColor?: string
+    borderColor?: string
+    borderRadius?: string
+    boxShadow?: string
+    borderWidth?: string
+    borderStyle?: string
+  }
+  // Header-spezifische Styles
+  header?: {
+    backgroundColor?: string
+    color?: string
+    fontSize?: string
+    fontWeight?: string
+    padding?: string
+    borderBottomColor?: string
+    borderBottomWidth?: string
+    borderBottomStyle?: string
+  }
+  // Content-spezifische Styles
+  content?: {
+    backgroundColor?: string
+    color?: string
+    padding?: string
+    fontSize?: string
+    lineHeight?: string
+  }
+  // Tab-spezifische Styles
+  tabs?: {
+    backgroundColor?: string
+    activeBackgroundColor?: string
+    color?: string
+    activeColor?: string
+    borderColor?: string
+    fontSize?: string
+    fontWeight?: string
+  }
+  // Resize-Handle-spezifische Styles
+  resizeHandle?: {
+    backgroundColor?: string
+    hoverBackgroundColor?: string
+    width?: string
+    height?: string
+  }
+  // Overlay-spezifische Styles
+  overlay?: {
+    backgroundColor?: string
+    backdropColor?: string
+  }
+  // Custom CSS-Klassen
+  className?: {
+    panel?: string
+    header?: string
+    content?: string
+    tabs?: string
+    resizeHandle?: string
+  }
+  // Custom CSS-Variablen für das Panel
+  cssVariables?: Record<string, string>
+}
+
+export interface StyleConfig {
+  // Panel-spezifische Styles
+  panel?: {
+    backgroundColor?: string
+    borderColor?: string
+    borderRadius?: string
+    boxShadow?: string
+  }
+  // Header-spezifische Styles
+  header?: {
+    backgroundColor?: string
+    color?: string
+    fontSize?: string
+    fontWeight?: string
+    padding?: string
+  }
+  // Tab-spezifische Styles
+  tabs?: {
+    backgroundColor?: string
+    activeBackgroundColor?: string
+    color?: string
+    activeColor?: string
+    borderColor?: string
+  }
+  // Resize-Handle-spezifische Styles
+  resizeHandle?: {
+    backgroundColor?: string
+    hoverBackgroundColor?: string
+    width?: string
+  }
+  // Overlay-spezifische Styles
+  overlay?: {
+    backgroundColor?: string
+    backdropColor?: string
+  }
+}
+
+export interface ThemeConfig {
+  name: string
+  variables: Record<string, string>
+  styles?: StyleConfig
 } 

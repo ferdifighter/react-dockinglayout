@@ -1,13 +1,30 @@
 /* React Docking Layout - Standard Styles */
 
+/* CSS-Variablen für Themes */
+:root {
+  --docking-bg: #ffffff;
+  --docking-panel-bg: #f8f9fa;
+  --docking-header-bg: #e9ecef;
+  --docking-header-color: #495057;
+  --docking-border: #dee2e6;
+  --docking-tab-bg: #f1f3f4;
+  --docking-tab-active-bg: #ffffff;
+  --docking-tab-color: #495057;
+  --docking-tab-active-color: #000000;
+  --docking-resize-handle-bg: #dee2e6;
+  --docking-resize-handle-hover-bg: #adb5bd;
+  --docking-overlay-bg: #ffffff;
+  --docking-overlay-backdrop: rgba(0, 0, 0, 0.1);
+}
+
 .docking-layout {
   display: flex;
   flex-direction: column;
   height: 100vh;
   width: 100vw;
   overflow: hidden;
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--docking-bg);
+  color: var(--docking-header-color);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 }
 
@@ -74,10 +91,10 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  background: var(--panel-bg);
-  color: var(--foreground);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
+  background: var(--docking-panel-bg);
+  color: var(--docking-header-color);
+  border: 1px solid var(--docking-border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   min-width: 0;
   min-height: 0;
 }
@@ -99,9 +116,9 @@
   height: 40px;
   min-height: 40px;
   max-height: 40px;
-  background: var(--panel-header-bg);
-  color: var(--panel-header-fg);
-  border-bottom: 1px solid var(--border);
+  background: var(--docking-header-bg);
+  color: var(--docking-header-color);
+  border-bottom: 1px solid var(--docking-border);
 }
 
 .panel-title {
@@ -125,20 +142,20 @@
 .panel-content {
   flex: 1;
   overflow: auto;
-  padding: var(--panel-content-padding, 12px);
-  background: var(--panel-bg);
-  color: var(--foreground);
+  padding: 12px;
+  background: var(--docking-panel-bg);
+  color: var(--docking-header-color);
 }
 
 .resize-handle {
   position: absolute;
-  background: var(--resize-handle);
+  background: var(--docking-resize-handle-bg);
   z-index: 1000;
   transition: background-color 0.2s ease;
 }
 
 .resize-handle:hover {
-  background-color: #007acc;
+  background-color: var(--docking-resize-handle-hover-bg);
 }
 
 .resize-handle--horizontal {
@@ -256,30 +273,30 @@
   min-height: 28px !important;
   max-height: 28px !important;
   height: 28px !important;
-  background: var(--tab-bg) !important;
-  color: var(--tab-fg) !important;
+  background: var(--docking-tab-bg) !important;
+  color: var(--docking-tab-color) !important;
 }
 
 /* Beispielhafte Umstellung auf CSS-Variablen für Theme-Support */
 .docking-sidebar {
-  background: var(--sidebar-bg);
-  border-right: 1px solid var(--border);
+  background: var(--docking-panel-bg);
+  border-right: 1px solid var(--docking-border);
 }
 
 .docking-sidebar--right {
-  border-left: 1px solid var(--border);
+  border-left: 1px solid var(--docking-border);
   border-right: none;
 }
 
 .tab-bar {
   display: flex;
-  background: var(--tab-bg);
-  border-bottom: 1px solid var(--border);
+  background: var(--docking-tab-bg);
+  border-bottom: 1px solid var(--docking-border);
 }
 
 .tab {
-  background: var(--tab-bg);
-  color: var(--tab-fg);
+  background: var(--docking-tab-bg);
+  color: var(--docking-tab-color);
   border: none;
   cursor: pointer;
   font-weight: 400;
@@ -288,54 +305,57 @@
 }
 
 .tab.active {
-  color: var(--tab-fg-active);
-  border-bottom: 2px solid var(--tab-active);
+  color: var(--docking-tab-active-color);
+  background: var(--docking-tab-active-bg);
+  border-bottom: 2px solid var(--docking-border);
   font-weight: 600;
 }
 
 .tab-top-active {
-  border-bottom: 2px solid var(--tab-active);
+  border-bottom: 2px solid var(--docking-border);
 }
 
 .tab-bottom-active {
-  border-top: 2px solid var(--tab-active);
+  border-top: 2px solid var(--docking-border);
 }
 
 input {
-  background: var(--input-bg, #fff);
-  color: var(--foreground);
-  border: 1px solid var(--input-border, #e0e0e0);
+  background: var(--docking-panel-bg);
+  color: var(--docking-header-color);
+  border: 1px solid var(--docking-border);
 }
 .hint, .secondary, .panel-description {
-  color: var(--text-secondary, #888);
+  color: var(--docking-header-color);
+  opacity: 0.7;
 }
 
 .toolbox, .editor-content {
-  background: var(--panel-bg);
-  color: var(--foreground);
+  background: var(--docking-panel-bg);
+  color: var(--docking-header-color);
 }
 
 .tab-bar-bottom {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--docking-border);
   border-bottom: none;
 }
 
 .panel-tabs-bar {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--docking-border);
 }
 
 .panel-tabs-bar .tab {
-  color: var(--tab-fg) !important;
-  background: var(--tab-bg) !important;
+  color: var(--docking-tab-color) !important;
+  background: var(--docking-tab-bg) !important;
 }
 .panel-tabs-bar .tab.active,
 .panel-tabs-bar .tab-bottom-active {
-  color: var(--tab-fg-active) !important;
+  color: var(--docking-tab-active-color) !important;
+  background: var(--docking-tab-active-bg) !important;
 }
 
 .sidebar-tab-btn {
-  background: var(--sidebar-tab-bg, var(--sidebar-bg));
-  color: var(--sidebar-tab-fg, var(--foreground));
+  background: var(--docking-panel-bg);
+  color: var(--docking-header-color);
   border-radius: 4px;
   font-weight: 500;
   font-size: 14px;
@@ -352,18 +372,18 @@ input {
   transition: background 0.2s, color 0.2s;
 }
 .sidebar-tab-btn.active {
-  background: var(--sidebar-tab-active-bg, var(--border));
-  color: var(--sidebar-tab-active-fg, var(--primary));
+  background: var(--docking-header-bg);
+  color: var(--docking-header-color);
 }
 
 .sidebar-tab-btn svg {
-  fill: var(--icon-color);
+  fill: var(--docking-header-color);
 }
 
 .drawer-overlay {
-  background: var(--panel-bg);
-  color: var(--icon-color);
-  border-left: 1px solid var(--border);
+  background: var(--docking-overlay-bg);
+  color: var(--docking-header-color);
+  border-left: 1px solid var(--docking-border);
   box-shadow: -2px 0 8px rgba(0,0,0,0.32);
   z-index: 4000;
   display: flex;
@@ -375,35 +395,47 @@ input {
 }
 
 body.theme-dark {
-  --tab-bg: #232326;
-  --tab-fg: #bfc7d5;
-  --tab-fg-active: #fff;
+  --docking-bg: #1e1e1e;
+  --docking-panel-bg: #252526;
+  --docking-header-bg: #3c3c3c;
+  --docking-header-color: #cccccc;
+  --docking-border: #3c3c3c;
+  --docking-tab-bg: #2d2d30;
+  --docking-tab-active-bg: #1e1e1e;
+  --docking-tab-color: #cccccc;
+  --docking-tab-active-color: #ffffff;
+  --docking-resize-handle-bg: #3c3c3c;
+  --docking-resize-handle-hover-bg: #5c5c5c;
+  --docking-overlay-bg: #252526;
+  --docking-overlay-backdrop: rgba(0, 0, 0, 0.3);
 }
 
 .tab-bar, .tab-bar-bottom {
-  background: var(--tab-bg);
-  color: var(--tab-fg);
+  background: var(--docking-tab-bg);
+  color: var(--docking-tab-color);
 }
 .tab.active, .tab-bottom-active {
-  color: var(--tab-fg-active);
+  color: var(--docking-tab-active-color);
+  background: var(--docking-tab-active-bg);
 }
 
 .docking-panel[style*='height: 28px'] .tab {
-  color: var(--tab-fg) !important;
-  background: var(--tab-bg) !important;
+  color: var(--docking-tab-color) !important;
+  background: var(--docking-tab-bg) !important;
 }
 .docking-panel[style*='height: 28px'] .tab.active,
 .docking-panel[style*='height: 28px'] .tab-bottom-active {
-  color: var(--tab-fg-active) !important;
+  color: var(--docking-tab-active-color) !important;
+  background: var(--docking-tab-active-bg) !important;
 }
 
 /* Theme-kompatible Form-Elemente */
 .theme-dark select,
 .theme-dark input[type="text"],
 .theme-dark textarea {
-  background: var(--input-bg, #181c20);
-  color: var(--foreground, #f5f5f5);
-  border: 1px solid var(--input-border, #444);
+  background: var(--docking-panel-bg);
+  color: var(--docking-header-color);
+  border: 1px solid var(--docking-border);
   border-radius: 4px;
   padding: 4px 8px;
   font-size: 14px;
@@ -413,20 +445,20 @@ body.theme-dark {
 .theme-dark select:focus,
 .theme-dark input[type="text"]:focus,
 .theme-dark textarea:focus {
-  border-color: var(--primary, #90caf9);
+  border-color: var(--docking-resize-handle-hover-bg);
 }
 .theme-dark input[type="checkbox"] {
-  accent-color: var(--primary, #90caf9);
-  background: var(--input-bg, #181c20);
-  border: 1px solid var(--input-border, #444);
+  accent-color: var(--docking-resize-handle-hover-bg);
+  background: var(--docking-panel-bg);
+  border: 1px solid var(--docking-border);
 }
 
 .theme-light select,
 .theme-light input[type="text"],
 .theme-light textarea {
-  background: var(--input-bg, #fff);
-  color: var(--foreground, #222);
-  border: 1px solid var(--input-border, #e0e0e0);
+  background: var(--docking-panel-bg);
+  color: var(--docking-header-color);
+  border: 1px solid var(--docking-border);
   border-radius: 4px;
   padding: 4px 8px;
   font-size: 14px;
@@ -436,10 +468,10 @@ body.theme-dark {
 .theme-light select:focus,
 .theme-light input[type="text"]:focus,
 .theme-light textarea:focus {
-  border-color: var(--primary, #1976d2);
+  border-color: var(--docking-resize-handle-hover-bg);
 }
 .theme-light input[type="checkbox"] {
-  accent-color: var(--primary, #1976d2);
-  background: var(--input-bg, #fff);
-  border: 1px solid var(--input-border, #e0e0e0);
+  accent-color: var(--docking-resize-handle-hover-bg);
+  background: var(--docking-panel-bg);
+  border: 1px solid var(--docking-border);
 } 

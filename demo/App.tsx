@@ -1,5 +1,9 @@
 import React, { useState, useMemo, Suspense } from 'react'
-import { DockingLayout, DockingLayoutConfig, DockingPanelConfig } from '../src'
+import { 
+  DockingLayout, 
+  DockingLayoutConfig, 
+  DockingPanelConfig
+} from '../src'
 import { Tabs } from '../src'
 import '../src/styles.css';
 import '../src/themes/dark.theme.css';
@@ -12,6 +16,92 @@ const DemoApp: React.FC = () => {
   // State für geschlossene Panels
   const [closedPanels, setClosedPanels] = useState<string[]>([])
   const [theme, setTheme] = useState<'light' | 'dark' | 'auto'>('auto')
+  const [enablePanelStyling, setEnablePanelStyling] = useState(true)
+
+  // Panel-spezifische Styles für die Demo
+  const panelStyles = useMemo(() => ({
+    explorer: {
+      panel: {
+        backgroundColor: '#e3f2fd',
+        borderColor: '#2196f3',
+        borderRadius: '8px',
+      },
+      header: {
+        backgroundColor: '#bbdefb',
+        color: '#1565c0',
+        fontWeight: '600',
+      },
+      content: {
+        backgroundColor: '#f3e5f5',
+        color: '#4a148c',
+      }
+    },
+    terminal: {
+      panel: {
+        backgroundColor: '#263238',
+        borderColor: '#455a64',
+      },
+      header: {
+        backgroundColor: '#37474f',
+        color: '#eceff1',
+        fontWeight: '600',
+      },
+      content: {
+        backgroundColor: '#263238',
+        color: '#eceff1',
+        fontFamily: 'monospace',
+      }
+    },
+    problems: {
+      panel: {
+        backgroundColor: '#ffebee',
+        borderColor: '#f44336',
+      },
+      header: {
+        backgroundColor: '#ffcdd2',
+        color: '#c62828',
+        fontWeight: '600',
+      },
+      content: {
+        backgroundColor: '#ffebee',
+        color: '#c62828',
+      }
+    },
+    output: {
+      panel: {
+        backgroundColor: '#e8f5e8',
+        borderColor: '#4caf50',
+      },
+      header: {
+        backgroundColor: '#c8e6c9',
+        color: '#2e7d32',
+        fontWeight: '600',
+      },
+      content: {
+        backgroundColor: '#e8f5e8',
+        color: '#2e7d32',
+        fontFamily: 'monospace',
+      }
+    }
+  }), [])
+
+  // Global Styles für die Demo
+  const globalStyles = useMemo(() => ({
+    panel: {
+      borderRadius: '6px',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+    },
+    header: {
+      fontSize: '14px',
+      fontWeight: '500',
+    },
+    tabs: {
+      backgroundColor: '#f5f5f5',
+      activeBackgroundColor: '#ffffff',
+      color: '#333333',
+      activeColor: '#000000',
+    }
+  }), [])
 
   // Panels aus der Konfiguration extrahieren (nur schließbare, keine Toolbox)
   const getClosablePanels = (config: DockingLayoutConfig): { id: string; title: string }[] => {
@@ -191,6 +281,25 @@ const DemoApp: React.FC = () => {
         </div>
       </div>
       <div style={{ marginTop: 12 }}>
+        <strong>Styling-Optionen:</strong>
+        <div style={{
+          marginTop: 6,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+        }}>
+          <label style={{ display: 'flex', alignItems: 'center', fontSize: 13 }}>
+            <input
+              type="checkbox"
+              checked={enablePanelStyling}
+              onChange={e => setEnablePanelStyling(e.target.checked)}
+              style={{ marginRight: 6 }}
+            />
+            Panel-spezifische Styles aktivieren
+          </label>
+        </div>
+      </div>
+      <div style={{ marginTop: 12 }}>
         <strong>Panels ein-/ausblenden:</strong>
         <div style={{
           marginTop: 6,
@@ -250,6 +359,10 @@ const DemoApp: React.FC = () => {
       onLayoutChange={handleLayoutChange}
       onPanelClose={handlePanelClose}
       closedPanels={closedPanels}
+      panelStyles={enablePanelStyling ? panelStyles : undefined}
+      globalStyles={enablePanelStyling ? globalStyles : undefined}
+      theme={theme}
+      enablePanelStyling={enablePanelStyling}
       style={{
         height: '100vh',
         width: '100vw',

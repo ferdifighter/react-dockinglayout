@@ -1,8 +1,10 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react'
-import { DockingLayoutProps, DockingColumnConfig } from '../Types'
+import { DockingLayoutProps, DockingColumnConfig, PanelStyleConfig } from '../Types'
 import { Panel } from './Panel'
 import { ResizeHandle } from './ResizeHandle'
 import clsx from 'clsx'
+import { applyTheme } from '../themes/themeManager'
+import { applyStyles } from '../styles/styleManager'
 
 const COLLAPSED_WIDTH = 36
 
@@ -20,11 +22,25 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
   className,
   style,
   contentRenderer,
+  panelStyles,
+  globalStyles,
+  theme,
+  enablePanelStyling = true,
 }: DockingLayoutWithClosedProps) => {
   const [columns, setColumns] = useState<DockingColumnConfig[]>(config.columns)
   // Für Resizing: Referenz auf aktuelle Spalten
   const columnsRef = useRef(columns)
   columnsRef.current = columns
+
+  // Theme und Global Styles anwenden
+  useEffect(() => {
+    if (theme) {
+      applyTheme(theme)
+    }
+    if (globalStyles) {
+      applyStyles(globalStyles)
+    }
+  }, [theme, globalStyles])
 
   // Drawer-Overlay-Logik für unpinned Panels (links)
   const [openLeftDrawer, setOpenLeftDrawer] = useState<string | null>(null)
@@ -132,6 +148,11 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
     }))
   }, [columns, closedPanels])
   const visibleColumns = getVisibleColumns()
+
+  // Hilfsfunktion für Panel-Styles
+  const getPanelStyle = (panelId: string): PanelStyleConfig | undefined => {
+    return enablePanelStyling ? panelStyles?.[panelId] : undefined
+  }
 
   // Modernes Split-Resizing zwischen zwei Panels (vertikal, pixelgenau)
   const handleSplitResizeStart = (colIdx: number, upperIdx: number, e: React.MouseEvent<HTMLDivElement>) => {
@@ -349,6 +370,8 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
                 onClose={(id: string) => handlePanelClose(id)}
                 onPinChange={(id: string, pinned: boolean) => handlePinPanel(0, id, pinned)}
                 contentRenderer={contentRenderer}
+                panelStyle={getPanelStyle(panel.id)}
+                enablePanelStyling={enablePanelStyling}
               />
               {/* Moderner Split-ResizeHandle zwischen Panels (außer nach dem letzten) */}
               {idx < arr.length - 1 &&
@@ -429,6 +452,8 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
                       }
                     }}
                     contentRenderer={contentRenderer}
+                    panelStyle={getPanelStyle(panel.id)}
+                    enablePanelStyling={enablePanelStyling}
                   />
                   {/* ResizeHandle nur zwischen centerPanels, wenn beide resizable sind */}
                   {idx < centerPanels.length - 1 &&
@@ -478,6 +503,8 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
                   onClose={(id: string) => handlePanelClose(id)}
                   onPinChange={(id: string, pinned: boolean) => handlePinPanel(colIdx, id, pinned)}
                   contentRenderer={contentRenderer}
+                  panelStyle={getPanelStyle(activeBottomPanel.id)}
+                  enablePanelStyling={enablePanelStyling}
                 />
               )}
               {/* Overlay für ungepinnte Bottom-Panels */}
@@ -557,6 +584,8 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
                     onClose={(id: string) => handlePanelClose(id)}
                     onPinChange={(id: string, pinned: boolean) => handlePinPanel(colIdx, id, pinned)}
                     contentRenderer={contentRenderer}
+                    panelStyle={getPanelStyle(panel.id)}
+                    enablePanelStyling={enablePanelStyling}
                   />
                   {/* ResizeHandle nur zwischen expandedPanels, wenn beide resizable sind */}
                   {idx < expandedPanels.length - 1 && 
@@ -578,6 +607,8 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
                     onClose={(id: string) => handlePanelClose(id)}
                     onPinChange={(id: string, pinned: boolean) => handlePinPanel(colIdx, id, pinned)}
                     contentRenderer={contentRenderer}
+                    panelStyle={getPanelStyle(panel.id)}
+                    enablePanelStyling={enablePanelStyling}
                   />
                 </div>
               ))}
@@ -720,6 +751,8 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
                 onClose={(id: string) => handlePanelClose(id)}
                 onPinChange={(id: string, pinned: boolean) => handlePinPanel(visibleColumns.length-1, id, pinned)}
                 contentRenderer={contentRenderer}
+                panelStyle={getPanelStyle(panel.id)}
+                enablePanelStyling={enablePanelStyling}
               />
               {idx < arr.length - 1 && 
                arr[idx].resizable !== false && 

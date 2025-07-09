@@ -1,7 +1,12 @@
 import React, { useState } from 'react'
+import { DockingPanelConfig, PanelStyleConfig } from '../Types'
+import { Tabs } from './Tabs'
 import clsx from 'clsx'
-import { DockingPanelConfig } from '../Types'
-import { Tabs, Tab } from './Tabs'
+
+interface Tab {
+  label: string
+  content: React.ReactNode
+}
 
 interface PanelProps {
   config: DockingPanelConfig
@@ -11,6 +16,9 @@ interface PanelProps {
   className?: string
   style?: React.CSSProperties
   contentRenderer?: (panel: DockingPanelConfig) => React.ReactNode
+  // Neue Styling-Optionen
+  panelStyle?: PanelStyleConfig
+  enablePanelStyling?: boolean
 }
 
 export const Panel: React.FC<PanelProps> = ({
@@ -21,6 +29,8 @@ export const Panel: React.FC<PanelProps> = ({
   className,
   style,
   contentRenderer,
+  panelStyle,
+  enablePanelStyling = true,
 }: PanelProps) => {
   const collapsed = !!config.collapsed;
   const hasTabs = Array.isArray((config as any).tabs) && (config as any).tabs.length > 0
@@ -34,12 +44,25 @@ export const Panel: React.FC<PanelProps> = ({
     onToggle?.(config.id, !collapsed)
   }
 
+  // Panel-spezifische Styles generieren
   const getPanelStyles = (): React.CSSProperties => {
     const baseStyles: React.CSSProperties = {
       position: 'relative',
       display: 'flex',
       flexDirection: 'column',
       ...style,
+    }
+
+    // Panel-spezifische Styles anwenden
+    if (enablePanelStyling && panelStyle?.panel) {
+      Object.assign(baseStyles, panelStyle.panel)
+    }
+
+    // CSS-Variablen für das Panel setzen
+    if (enablePanelStyling && panelStyle?.cssVariables) {
+      Object.entries(panelStyle.cssVariables).forEach(([key, value]) => {
+        (baseStyles as any)[`--${key}`] = value
+      })
     }
 
     if (collapsed) {
@@ -69,6 +92,35 @@ export const Panel: React.FC<PanelProps> = ({
     }
   }
 
+  // Header-spezifische Styles generieren
+  const getHeaderStyles = (): React.CSSProperties => {
+    const headerStyles: React.CSSProperties = {}
+    
+    if (enablePanelStyling && panelStyle?.header) {
+      Object.assign(headerStyles, panelStyle.header)
+    }
+    
+    return headerStyles
+  }
+
+  // Content-spezifische Styles generieren
+  const getContentStyles = (): React.CSSProperties => {
+    const contentStyles: React.CSSProperties = { 
+      flex: 1,
+      ...(config.contentPadding !== undefined && config.contentPadding !== null ? { 
+        padding: typeof config.contentPadding === 'number' 
+          ? `${config.contentPadding}px` 
+          : config.contentPadding 
+      } : {})
+    }
+    
+    if (enablePanelStyling && panelStyle?.content) {
+      Object.assign(contentStyles, panelStyle.content)
+    }
+    
+    return contentStyles
+  }
+
   // Panel-Titel: Wenn Tabs, dann Titel des aktiven Tabs, sonst config.title
   const panelTitle = hasTabs ? tabs[activeTab]?.label || config.title : config.title
 
@@ -83,18 +135,40 @@ export const Panel: React.FC<PanelProps> = ({
     setActiveTab(idx);
   };
 
+  // CSS-Klassen für Panel
+  const panelClasses = clsx(
+    'docking-panel', 
+    `docking-panel--id-${config.id}`,
+    enablePanelStyling && panelStyle?.className?.panel,
+    className
+  )
+
+  // CSS-Klassen für Header
+  const headerClasses = clsx(
+    'panel-header',
+    {
+      'panel-header--collapsed': collapsed,
+    },
+    enablePanelStyling && panelStyle?.className?.header
+  )
+
+  // CSS-Klassen für Content
+  const contentClasses = clsx(
+    'panel-content',
+    enablePanelStyling && panelStyle?.className?.content
+  )
+
   return (
     <div
-      className={clsx('docking-panel', className)}
+      className={panelClasses}
       style={getPanelStyles()}
       data-panel-id={config.id}
     >
       {/* Header: Im Center-Bereich Pin/Unpin-Button statt Collapse */}
       {config.hideHeader !== true && !collapsed && (
         <div
-          className={clsx('panel-header', {
-            'panel-header--collapsed': collapsed,
-          })}
+          className={headerClasses}
+          style={getHeaderStyles()}
           onClick={isCenter && onPinChange ? undefined : handleToggle}
         >
           <span className="panel-title" style={{ flex: 1 }}>{panelTitle}</span>
@@ -173,29 +247,15 @@ export const Panel: React.FC<PanelProps> = ({
         {/* Panel Content */}
         {hasTabs ? (
           <div 
-            className="panel-content" 
-            style={{ 
-              flex: 1,
-              ...(config.contentPadding !== undefined && config.contentPadding !== null ? { 
-                padding: typeof config.contentPadding === 'number' 
-                  ? `${config.contentPadding}px` 
-                  : config.contentPadding 
-              } : {})
-            }}
+            className={contentClasses}
+            style={getContentStyles()}
           >
             {tabs[activeTab]?.content}
           </div>
         ) : (
           <div 
-            className="panel-content" 
-            style={{ 
-              flex: 1,
-              ...(config.contentPadding !== undefined && config.contentPadding !== null ? { 
-                padding: typeof config.contentPadding === 'number' 
-                  ? `${config.contentPadding}px` 
-                  : config.contentPadding 
-              } : {})
-            }}
+            className={contentClasses}
+            style={getContentStyles()}
           >
             {contentRenderer ? contentRenderer(config) : config.content}
           </div>

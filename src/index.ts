@@ -11,6 +11,9 @@ import type {
   DockingColumnConfig,
   ResizeHandleProps,
   PanelPosition,
+  ThemeConfig,
+  StyleConfig,
+  PanelStyleConfig,
 } from './Types'
 
 export type {
@@ -20,4 +23,7 @@ export type {
   DockingColumnConfig,
   ResizeHandleProps,
   PanelPosition,
+  ThemeConfig,
+  StyleConfig,
+  PanelStyleConfig,
 } 
