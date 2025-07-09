@@ -243,3 +243,25 @@ const [closedPanels, setClosedPanels] = useState<string[]>([]);
 So hast du die volle Kontrolle, welche Panels angezeigt werden – ideal für Toolbars, User-Settings oder dynamische Layouts!
 
 --- 
+
+---
+
+## 🆕 Panel gezielt per CSS stylen
+
+Jedes Panel erhält jetzt automatisch ein data-Attribut:
+
+```html
+<div class="docking-panel" data-panel-id="editor">...</div>
+```
+
+Damit kannst du in deinem eigenen CSS gezielt einzelne Panels ansprechen, z.B. um Padding, Farben oder andere Styles individuell zu setzen:
+
+```css
+.docking-panel[data-panel-id="editor"] .panel-content {
+  padding: 0 !important;
+}
+```
+
+Das funktioniert auch in eigenen Projekten, z.B. in einer App.css oder globalen CSS-Datei.
+
+--- 

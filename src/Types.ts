@@ -19,6 +19,7 @@ export interface DockingPanelConfig {
   className?: string
   style?: React.CSSProperties
   center?: boolean
+  contentPadding?: number | string // Padding für den Panel-Content (z.B. 12, '16px', '1rem')
 }
 
 export interface DockingColumnConfig {

@@ -321,7 +321,7 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
                   onClick={() => setOpenLeftDrawer(null)}
                 >✕</button>
               </div>
-              <div style={{ flex: 1, overflow: 'auto', padding: 12 }}>{contentRenderer ? contentRenderer(panel) : panel.content}</div>
+              <div className="panel-content" style={{ flex: 1, overflow: 'auto' }}>{contentRenderer ? contentRenderer(panel) : panel.content}</div>
             </div>
           ))}
         </div>
@@ -529,7 +529,7 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
                       }}
                     >✕</button>
                   </div>
-                  <div style={{ flex: 1, overflow: 'auto', padding: 12 }}>{activeBottomPanel.content}</div>
+                  <div className="panel-content" style={{ flex: 1, overflow: 'auto' }}>{activeBottomPanel.content}</div>
                 </div>
               )}
             </div>
@@ -684,7 +684,7 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
                   onClick={() => setOpenRightDrawer(null)}
                 >✕</button>
               </div>
-              <div style={{ flex: 1, overflow: 'auto', padding: 12 }}>{contentRenderer ? contentRenderer(panel) : panel.content}</div>
+              <div className="panel-content" style={{ flex: 1, overflow: 'auto' }}>{contentRenderer ? contentRenderer(panel) : panel.content}</div>
             </div>
           ))}
         </div>

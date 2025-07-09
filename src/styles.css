@@ -125,7 +125,7 @@
 .panel-content {
   flex: 1;
   overflow: auto;
-  padding: 12px;
+  padding: var(--panel-content-padding, 12px);
   background: var(--panel-bg);
   color: var(--foreground);
 }

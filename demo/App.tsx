@@ -4,6 +4,7 @@ import { Tabs } from '../src'
 import '../src/styles.css';
 import '../src/themes/dark.theme.css';
 import '../src/themes/light.theme.css';
+import './App.css'
 
 const PANEL_IDS = ['explorer', 'search', 'toolbox', 'editor', 'console', 'outline', 'problems']
 
@@ -76,7 +77,7 @@ const DemoApp: React.FC = () => {
             canPin: false,
             hideHeader: true,
             resizable: false,
-            size: 300,
+            size: 150,
             content: null, // Wird unten gesetzt
           },
           {
@@ -117,8 +118,9 @@ const DemoApp: React.FC = () => {
             size: 200,
             resizable: true,
             pinned: false,
+            contentPadding: 8, // Weniger Padding für Terminal
             content: (
-              <div style={{ fontFamily: 'monospace', fontSize: '12px' }} className="panel-content">
+              <div style={{ fontFamily: 'monospace', fontSize: '12px' }}>
                 <div>user@host:~$ echo Hallo Welt</div>
                 <div>Hallo Welt</div>
               </div>
@@ -135,6 +137,7 @@ const DemoApp: React.FC = () => {
             title: 'Outline',
             closable: true,
             pinned: true,
+            contentPadding: 16, // Mehr Padding für Outline
             content: (
               <div>
                 <h3>Outline</h3>

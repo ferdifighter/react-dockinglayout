@@ -8,6 +8,7 @@ html.theme-dark, body.theme-dark {
   --panel-bg: #23272c;
   --panel-header-bg: #1a1d20;
   --panel-header-fg: #f5f5f5;
+  --panel-content-padding: 12px;
   --tab-bg: #23272c;
   --tab-active: #90caf9;
   --tab-fg: #bbb;

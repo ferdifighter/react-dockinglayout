@@ -87,6 +87,7 @@ export const Panel: React.FC<PanelProps> = ({
     <div
       className={clsx('docking-panel', className)}
       style={getPanelStyles()}
+      data-panel-id={config.id}
     >
       {/* Header: Im Center-Bereich Pin/Unpin-Button statt Collapse */}
       {config.hideHeader !== true && !collapsed && (
@@ -171,11 +172,31 @@ export const Panel: React.FC<PanelProps> = ({
       }}>
         {/* Panel Content */}
         {hasTabs ? (
-          <div style={{ flex: 1, overflow: 'auto', padding: 12 }}>
+          <div 
+            className="panel-content" 
+            style={{ 
+              flex: 1,
+              ...(config.contentPadding !== undefined && config.contentPadding !== null ? { 
+                padding: typeof config.contentPadding === 'number' 
+                  ? `${config.contentPadding}px` 
+                  : config.contentPadding 
+              } : {})
+            }}
+          >
             {tabs[activeTab]?.content}
           </div>
         ) : (
-          <div style={{ flex: 1, overflow: 'auto', padding: 12 }}>
+          <div 
+            className="panel-content" 
+            style={{ 
+              flex: 1,
+              ...(config.contentPadding !== undefined && config.contentPadding !== null ? { 
+                padding: typeof config.contentPadding === 'number' 
+                  ? `${config.contentPadding}px` 
+                  : config.contentPadding 
+              } : {})
+            }}
+          >
             {contentRenderer ? contentRenderer(config) : config.content}
           </div>
         )}
