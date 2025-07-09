@@ -35,10 +35,6 @@ export const DockingLayout: React.FC<DockingLayoutWithClosedProps> = ({
   const [activeBottomTabId, setActiveBottomTabId] = useState<string | null>(
     bottomPanelsGlobal.length > 0 ? bottomPanelsGlobal[0].id : null
   );
-  // State für das ursprünglich aktive angepinnte Panel (für Click-Outside-Recovery)
-  const [originalActiveTabId, setOriginalActiveTabId] = useState<string | null>(
-    bottomPanelsGlobal.length > 0 ? bottomPanelsGlobal[0].id : null
-  );
 
   // Drawer-Overlay-Logik für unpinned Panels (rechts)
   const [openRightDrawer, setOpenRightDrawer] = useState<string | null>(null)

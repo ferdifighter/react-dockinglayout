@@ -1,6 +1,6 @@
 {
   "name": "@ferdifighter/react-docking-layout",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "description": "Eine flexible React-Komponente für Docking-Layouts ähnlich VS Code",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
@@ -43,6 +43,7 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "jest": "^29.0.0",
     "rollup": "^3.0.0",
+    "rollup-plugin-copy": "^3.5.0",
     "rollup-plugin-dts": "^5.0.0",
     "rollup-plugin-peer-deps-external": "^2.2.4",
     "rollup-plugin-postcss": "^4.0.2",
